@@ -1,0 +1,19 @@
+# Core Streamlit & Visualization
+streamlit>=1.0.0
+pandas>=1.0.0
+plotly>=5.0.0
+
+# Forensic & Data Analysis Libraries (Highly Recommended, though some have fallbacks)
+# pytsk3 is critical for file system analysis (File System Analysis and Data Extraction modules)
+pytsk3
+# python-magic is used for file type identification (Image Processing, Data Extraction)
+python-magic
+# Pillow (PIL) and exifread for media/EXIF data (Data Extraction)
+Pillow
+exifread
+# fpdf is used for PDF report generation (Report Generation module)
+fpdf
+
+# Development/Utility Libraries (less critical, often built-in or easy to get)
+# If you are using external modules not shown, they might need additional packages.
+# Assuming standard built-in libraries like os, sys, pathlib, json, csv, datetime, uuid, hashlib are used.
