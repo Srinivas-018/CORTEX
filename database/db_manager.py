@@ -69,14 +69,15 @@ def create_case(case_id, case_name, investigator, device_info="", notes=""):
             VALUES (?, ?, ?, ?, ?, ?)
         """, (case_id, case_name, investigator, device_info, datetime.now().isoformat(), notes))
         
+        conn.commit()
+        conn.close()
+        
         add_chain_of_custody(case_id, "Case Created", investigator, f"Created case: {case_name}")
         
-        conn.commit()
         return True
     except sqlite3.IntegrityError:
-        return False
-    finally:
         conn.close()
+        return False
 
 def get_all_cases():
     """Retrieve all cases"""
