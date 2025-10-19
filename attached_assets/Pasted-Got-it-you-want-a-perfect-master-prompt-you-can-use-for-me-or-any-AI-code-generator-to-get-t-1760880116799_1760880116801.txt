@@ -1,0 +1,89 @@
+Got it ✅ — you want a perfect “master prompt” you can use (for me or any AI code generator) to get the full working Python + Streamlit implementation of your project CORTEX: Mobile Device Forensics Analyzer.
+Here’s the ready-to-use prompt, fully optimized to generate complete, structured, and working code 👇
+🧠 Master Prompt: CORTEX – Mobile Device Forensics Analyzer (Python + Streamlit)
+🚀 Copy and paste this entire prompt whenever you want the complete working code for your project.
+Prompt:
+
+I want you to generate the complete working Python + Streamlit project called CORTEX – Mobile Device Forensics Analyzer.
+
+🧩 Project Overview:
+CORTEX is a mobile image forensic analysis tool designed to process an exact copied image of a mobile device (like .img, .bin, or .dd) and extract, analyze, and visualize digital evidence.
+
+It should provide a forensic workflow for investigators — from data extraction to timeline analysis and report generation.
+💻 Tech Stack:
+Frontend/UI: Streamlit
+Backend: Python
+Storage: SQLite or JSON (lightweight evidence DB)
+Visualization: Plotly or Matplotlib
+File Analysis: pytsk3, python-magic, exifread, pillow
+Data Analysis: pandas, numpy
+Hashing/Integrity: hashlib
+Report Export: fpdf or reportlab
+⚙️ Core Modules (Functional Requirements):
+Home Page / Case Dashboard
+Streamlit UI to manage cases (Add, View, Delete)
+Each case stores metadata (Case ID, Investigator, Device Info, Hash)
+Image Input & Verification
+Upload mobile image file (.img, .bin, .dd)
+Compute and display file hash (SHA-256)
+Show metadata (device size, partition count)
+File System Parser
+Use pytsk3 to mount and explore partitions
+Identify key directories (e.g. /data/com.whatsapp/, /media/DCIM/)
+Data Extraction Modules
+Call Logs & SMS: Parse SQLite databases
+Chat/Messaging Apps: Extract from WhatsApp, Telegram DBs
+Multimedia Files: Extract and preview images/videos
+Location Data: Read EXIF GPS + Google Map visualization
+Browser History & App Usage: Parse SQLite databases
+Contacts & Notes: Extract from address book DBs
+Deleted/Hidden Data: Scan unallocated space for fragments
+Analysis & Visualization
+Timeline reconstruction (using timestamps)
+Relationship graph between contacts (optional)
+Heatmap of locations (if GPS available)
+Keyword search for artifacts (e.g., “password”, “confidential”)
+Integrity & Chain of Custody
+Maintain SHA256 hash logs for every extracted artifact
+Store verification log in SQLite for future proof
+Report Generation
+Generate summary report (PDF) with:
+Device info
+Extracted data overview
+Timeline summary
+Hash validation table
+Allow export of CSV/PDF artifacts
+📁 Folder Structure:
+CORTEX/
+├── app.py                      # Main Streamlit app
+├── modules/
+│   ├── image_input.py
+│   ├── file_parser.py
+│   ├── data_extractor.py
+│   ├── analysis_tools.py
+│   ├── visualization.py
+│   └── report_generator.py
+├── database/
+│   └── cortex.db
+├── assets/
+│   ├── logo.png
+│   └── sample_image.img
+├── requirements.txt
+└── README.md
+🧠 Additional Requirements:
+Modular code (each functionality in its own Python file)
+Error handling for corrupted or missing data
+Dummy data support (for testing without real .img)
+Clear comments and function-level docstrings
+Responsive and clean Streamlit UI (tabs or sidebar layout)
+Option to simulate extraction for demo mode
+🎯 Output:
+Generate complete Python code files for this project with:
+
+Full working Streamlit UI
+Functional backend logic
+Data visualization (timeline, map, chart)
+Example dummy data for demo/testing
+Instructions for setup and running the app (pip install -r requirements.txt, streamlit run app.py)
+💡 Goal: Produce a fully working and testable version of CORTEX that can analyze a mobile device image, extract useful evidence, visualize findings, and generate a professional forensic report — all within Streamlit.
+Would you like me to execute this prompt now (i.e., start generating the full working code for you phase-by-phase)?

@@ -16,15 +16,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Streamlit App"
+args = "CORTEX Forensics"
 
 [[workflows.workflow]]
-name = "Streamlit App"
+name = "CORTEX Forensics"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run AIModelPerfector/app.py"
+args = "streamlit run app.py"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
