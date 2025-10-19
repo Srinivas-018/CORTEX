@@ -1,0 +1,3 @@
+[server]
+# Set maximum upload size in MB. 50 GB = 51200 MB (using 1 GB = 1024 MB)
+maxUploadSize = 51200
