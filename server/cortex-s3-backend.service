@@ -1,0 +1,40 @@
+# Example systemd service file for CORTEX S3 Upload Backend
+# Install to: /etc/systemd/system/cortex-s3-backend.service
+
+[Unit]
+Description=CORTEX S3 Multipart Upload Backend Service
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/CORTEX
+Environment="AWS_ACCESS_KEY_ID=your-access-key-id"
+Environment="AWS_SECRET_ACCESS_KEY=your-secret-access-key"
+Environment="AWS_DEFAULT_REGION=us-east-1"
+Environment="S3_BUCKET=your-forensics-bucket"
+Environment="S3_KEY_PREFIX=evidence/"
+Environment="API_PORT=8001"
+Environment="ALLOWED_ORIGINS=http://localhost:8501,https://your-domain.com"
+
+ExecStart=/usr/local/bin/uvicorn server.s3_complete_app:app --host 0.0.0.0 --port 8001 --workers 4
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+# Installation instructions:
+# 1. Edit this file with your actual AWS credentials and configuration
+# 2. Copy to systemd directory:
+#    sudo cp cortex-s3-backend.service /etc/systemd/system/
+# 3. Reload systemd:
+#    sudo systemctl daemon-reload
+# 4. Enable service to start on boot:
+#    sudo systemctl enable cortex-s3-backend
+# 5. Start the service:
+#    sudo systemctl start cortex-s3-backend
+# 6. Check status:
+#    sudo systemctl status cortex-s3-backend
+# 7. View logs:
+#    sudo journalctl -u cortex-s3-backend -f
