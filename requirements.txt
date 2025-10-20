@@ -14,11 +14,19 @@ exifread
 # fpdf is used for PDF report generation (Report Generation module)
 fpdf
 
+# S3 Direct Upload Dependencies
+# boto3 for AWS S3 operations (multipart upload)
+boto3>=1.34.0
+# FastAPI and uvicorn for companion upload service
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+# pydantic for request/response models (included with FastAPI but explicit for clarity)
+pydantic>=2.0.0
+# requests for HTTP calls to FastAPI backend
+requests>=2.31.0
+# python-dotenv for environment variable management
+python-dotenv>=1.0.0
+
 # Development/Utility Libraries (less critical, often built-in or easy to get)
 # If you are using external modules not shown, they might need additional packages.
 # Assuming standard built-in libraries like os, sys, pathlib, json, csv, datetime, uuid, hashlib are used.
-exifread
-pandas
-Pillow
-plotly
-streamlit

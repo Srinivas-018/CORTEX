@@ -1,3 +1,33 @@
 [server]
 # Set maximum upload size in MB. 50 GB = 51200 MB (using 1 GB = 1024 MB)
+# Note: For files over 100 MB, use the Direct S3 Upload feature in pages/large_upload.py
+# to bypass the Streamlit server entirely and upload directly to S3.
 maxUploadSize = 51200
+
+# Increase max message size for better performance with large data transfers
+maxMessageSize = 200
+
+# Enable CORS for development (adjust in production)
+enableCORS = true
+
+# Increase timeout for long-running operations
+# Note: This doesn't help with upload timeouts; use Direct S3 Upload instead
+serverMaxUploadTimeoutSeconds = 3600
+
+[browser]
+# Gather usage statistics (set to false if privacy is a concern)
+gatherUsageStats = false
+
+# Server address to use when generating links
+# serverAddress = "localhost"
+
+# Server port to use when generating links
+# serverPort = 8501
+
+[theme]
+# Optional: Define a custom theme for your app
+# primaryColor = "#1f77b4"
+# backgroundColor = "#ffffff"
+# secondaryBackgroundColor = "#f0f2f6"
+# textColor = "#262730"
+# font = "sans serif"
