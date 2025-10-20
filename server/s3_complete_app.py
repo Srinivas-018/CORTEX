@@ -57,7 +57,7 @@ Security:
 import os
 import sys
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -120,7 +120,7 @@ class CreateMultipartResponse(BaseModel):
     bucket: str = Field(..., description="Bucket name")
     part_size: int = Field(..., description="Part size in bytes")
     part_count: int = Field(..., description="Total number of parts")
-    presigned_parts: List[Dict[str, any]] = Field(..., description="Presigned URLs for each part")
+    presigned_parts: List[Dict[str, Any]] = Field(..., description="Presigned URLs for each part")
 
 
 class PartInfo(BaseModel):

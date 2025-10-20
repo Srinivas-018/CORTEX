@@ -81,7 +81,7 @@ Security Considerations:
 import math
 import boto3
 from botocore.exceptions import ClientError
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 
 
 # Constants
@@ -217,7 +217,7 @@ def generate_presigned_part_urls(
     upload_id: str,
     part_count: int,
     expires_in: int = 3600
-) -> List[Dict[str, any]]:
+) -> List[Dict[str, Any]]:
     """
     Generate presigned URLs for uploading parts.
     
@@ -290,7 +290,7 @@ def complete_multipart_upload(
     bucket: str,
     key: str,
     upload_id: str,
-    parts: List[Dict[str, any]]
+    parts: List[Dict[str, Any]]
 ) -> Dict:
     """
     Complete a multipart upload after all parts have been uploaded.

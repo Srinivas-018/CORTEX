@@ -10,10 +10,6 @@ maxMessageSize = 200
 # Enable CORS for development (adjust in production)
 enableCORS = true
 
-# Increase timeout for long-running operations
-# Note: This doesn't help with upload timeouts; use Direct S3 Upload instead
-serverMaxUploadTimeoutSeconds = 3600
-
 [browser]
 # Gather usage statistics (set to false if privacy is a concern)
 gatherUsageStats = false
