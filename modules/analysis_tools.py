@@ -9,9 +9,9 @@ from datetime import datetime
 
 def render_analysis_tools(case_id):
     """Render the analysis tools interface"""
-    st.header("🔍 Analysis & Investigation Tools")
+    st.header("Analysis & Investigation Tools")
     
-    tabs = st.tabs(["⏱️ Timeline Reconstruction", "🔎 Keyword Search", "📊 Statistics"])
+    tabs = st.tabs(["Timeline Reconstruction", "Keyword Search", "Statistics"])
     
     with tabs[0]:
         render_timeline_reconstruction()
@@ -24,14 +24,14 @@ def render_analysis_tools(case_id):
 
 def render_timeline_reconstruction():
     """Create a timeline from all extracted artifacts"""
-    st.subheader("⏱️ Timeline Reconstruction")
+    st.subheader("Timeline Reconstruction")
     
     st.info("Combine all artifacts into a chronological timeline for investigation")
     
     if st.button("Generate Timeline", type="primary"):
         timeline_data = build_timeline()
         st.session_state['timeline'] = timeline_data
-        st.success(f"✅ Generated timeline with {len(timeline_data)} events")
+        st.success(f"Generated timeline with {len(timeline_data)} events")
     
     if 'timeline' in st.session_state:
         timeline = st.session_state['timeline']
@@ -63,7 +63,7 @@ def render_timeline_reconstruction():
 
 def render_keyword_search():
     """Search for keywords across all artifacts"""
-    st.subheader("🔎 Keyword Search")
+    st.subheader("Keyword Search")
     
     st.write("Search for keywords across SMS, chats, browser history, and other text artifacts")
     
@@ -80,7 +80,7 @@ def render_keyword_search():
         st.session_state['search_results'] = results
         
         if len(results) > 0:
-            st.success(f"✅ Found {len(results)} matches")
+            st.success(f"Found {len(results)} matches")
         else:
             st.warning("No matches found")
     
@@ -89,7 +89,7 @@ def render_keyword_search():
 
 def render_statistics(case_id):
     """Display statistics about extracted data"""
-    st.subheader("📊 Case Statistics")
+    st.subheader("Case Statistics")
     
     from database.db_manager import get_case_evidence
     evidence = get_case_evidence(case_id)
