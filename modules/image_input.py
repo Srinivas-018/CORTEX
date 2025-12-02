@@ -91,7 +91,7 @@ def render_image_input(case_id):
         for key, value in metadata.items():
             st.write(f"**{key}:** {value}")
 
-        if st.button("✅ Verify & Process Image", type="primary"):
+        if st.button("Verify & Process Image", type="primary"):
             from database.db_manager import update_case, add_chain_of_custody, add_evidence
 
             # You may want to move tmp_path into your project's evidence storage here
@@ -113,7 +113,7 @@ def render_image_input(case_id):
                 f"Uploaded and verified {uploaded_file.name} (SHA-256: {sha256_hash[:16]}...)"
             )
 
-            st.success("✅ Image verified and added to case evidence!")
+            st.success("Image verified and added to case evidence!")
             st.balloons()
 
         return {
@@ -126,9 +126,9 @@ def render_image_input(case_id):
         }
 
     else:
-        st.warning("⚠️ No device image uploaded yet")
+        st.warning("No device image uploaded yet")
 
-        with st.expander("ℹ️ Supported Image Formats"):
+        with st.expander("Supported Image Formats"):
             st.markdown("""
             - **.img** - Raw disk image
             - **.bin** - Binary image file
