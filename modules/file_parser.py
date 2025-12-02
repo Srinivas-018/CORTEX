@@ -8,18 +8,18 @@ import os
 
 def render_file_parser(case_id, image_info=None):
     """Render the file system parser interface"""
-    st.header("🗂️ File System Parser")
+    st.header("File System Parser")
     
     if not image_info:
-        st.warning("⚠️ Please upload a device image first in the 'Image Input' tab")
+        st.warning("Please upload a device image first in the 'Image Input' tab")
         return
     
     st.info(f"Analyzing file system from: **{image_info.get('filename', 'Unknown')}**")
     
-    demo_mode = st.checkbox("🎭 Use Demo Mode (Simulated Data)", value=True)
+    demo_mode = st.checkbox("Use Demo Mode (Simulated Data)", value=True)
     
     if demo_mode:
-        st.subheader("📂 Detected Partitions")
+        st.subheader("Detected Partitions")
         
         partitions = [
             {"name": "boot", "type": "ext4", "size": "32 MB", "files": 150},
@@ -29,7 +29,7 @@ def render_file_parser(case_id, image_info=None):
         ]
         
         for partition in partitions:
-            with st.expander(f"📁 Partition: {partition['name']} ({partition['type']}) - {partition['size']}"):
+            with st.expander(f"Partition: {partition['name']} ({partition['type']}) - {partition['size']}"):
                 col1, col2, col3 = st.columns(3)
                 col1.metric("Type", partition['type'])
                 col2.metric("Size", partition['size'])
@@ -42,18 +42,18 @@ def render_file_parser(case_id, image_info=None):
         
         if 'selected_partition' in st.session_state:
             partition_name = st.session_state['selected_partition']
-            st.subheader(f"📂 Browsing: /{partition_name}")
+            st.subheader(f"Browsing: /{partition_name}")
             
             key_directories = get_key_directories(partition_name)
             
             for directory in key_directories:
-                with st.expander(f"📁 {directory['path']}"):
+                with st.expander(f"{directory['path']}"):
                     st.write(f"**Description:** {directory['description']}")
                     st.write(f"**Files:** {directory['file_count']}")
                     st.write(f"**Forensic Value:** {directory['value']}")
                     
                     if st.button(f"Extract Data", key=f"extract_{directory['path']}"):
-                        st.success(f"✅ Marked for extraction: {directory['path']}")
+                        st.success(f"Marked for extraction: {directory['path']}")
     
     else:
         st.info("🔍 Real file system parsing requires pytsk3 library")
