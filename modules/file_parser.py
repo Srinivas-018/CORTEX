@@ -17,7 +17,7 @@ def ensure_pytsk3():
     try:
         import pytsk3  # noqa: F401
         return True
-    except Exception as exc:
+    except ImportError as exc:
         install_hint = """pytsk3 is required for real file system parsing. Install with:
 
 **Debian/Ubuntu:**
@@ -49,7 +49,6 @@ For more information, visit: https://github.com/py4n6/pytsk
         logging.error("pytsk3 import failed: %s", exc)
         
         try:
-            import streamlit as st
             st.error("⚠️ pytsk3 is required but not installed. Real file system parsing will not work.")
             st.markdown(f"**Installation Instructions:**\n{install_hint}")
             st.stop()
@@ -122,25 +121,21 @@ def render_file_parser(case_id, image_info=None):
         
         # TODO: Implement actual partition mounting and file extraction
         # This is where real pytsk3-based filesystem parsing would occur
+        st.markdown("**Example pytsk3 usage:**")
         st.code("""
-# Example usage (to be implemented):
-try:
-    image_path = image_info.get('path', '')
-    
-    # Open the disk image
-    img = pytsk3.Img_Info(image_path)
-    
-    # Access the volume system (partition table)
-    # volume = pytsk3.Volume_Info(img)
-    
-    # Iterate through partitions
-    # for partition in volume:
-    #     # Mount and analyze each partition
-    #     # Extract files and directories
-    #     pass
-    
-except Exception as e:
-    st.error(f"Error parsing image: {e}")
+import pytsk3
+
+# Open the disk image
+img = pytsk3.Img_Info('/path/to/image.img')
+
+# Access the volume system (partition table)
+volume = pytsk3.Volume_Info(img)
+
+# Iterate through partitions
+for partition in volume:
+    # Mount and analyze each partition
+    # Extract files and directories
+    pass
         """, language="python")
         
         st.info("💡 Real-time filesystem parsing implementation coming soon. For now, use Demo Mode.")
