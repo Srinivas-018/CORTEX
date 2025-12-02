@@ -10,9 +10,9 @@ import pandas as pd
 
 def render_visualization(case_id):
     """Render visualization interface"""
-    st.header("📊 Data Visualization")
+    st.header("Data Visualization")
     
-    tabs = st.tabs(["📈 Charts", "🗺️ Location Map", "⏰ Timeline View", "📞 Communication Network"])
+    tabs = st.tabs(["Charts", "Location Map", "Timeline View", "Communication Network"])
     
     with tabs[0]:
         render_charts()
@@ -28,7 +28,7 @@ def render_visualization(case_id):
 
 def render_charts():
     """Render various data charts"""
-    st.subheader("📈 Data Analysis Charts")
+    st.subheader("Data Analysis Charts")
     
     if 'call_logs' in st.session_state:
         st.write("**Call Activity Analysis**")
@@ -88,7 +88,7 @@ def render_charts():
 
 def render_location_map():
     """Render location data on a map"""
-    st.subheader("🗺️ Location History Map")
+    st.subheader("Location History Map")
     
     if 'locations' in st.session_state:
         locations = st.session_state['locations']
@@ -117,7 +117,7 @@ def render_location_map():
         st.dataframe(locations, use_container_width=True)
     
     else:
-        st.info("📍 No location data extracted yet. Extract location data from the 'Data Extraction' tab first.")
+        st.info("No location data extracted yet. Extract location data from the 'Data Extraction' tab first.")
         
         st.write("**Location data can come from:**")
         st.write("- GPS coordinates in photo EXIF data")
@@ -127,7 +127,7 @@ def render_location_map():
 
 def render_timeline_view():
     """Render visual timeline"""
-    st.subheader("⏰ Visual Timeline")
+    st.subheader("Visual Timeline")
     
     if 'timeline' in st.session_state:
         timeline = st.session_state['timeline']
@@ -157,11 +157,11 @@ def render_timeline_view():
         st.plotly_chart(fig2, use_container_width=True)
     
     else:
-        st.info("⏱️ No timeline generated yet. Generate a timeline from the 'Analysis Tools' tab first.")
+        st.info("No timeline generated yet. Generate a timeline from the 'Analysis Tools' tab first.")
 
 def render_communication_network():
     """Render communication network graph"""
-    st.subheader("📞 Communication Network")
+    st.subheader("Communication Network")
     
     st.info("Visualize relationships between contacts based on communication frequency")
     
