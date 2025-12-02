@@ -5,6 +5,64 @@ Parses file systems from device images using pytsk3
 
 import streamlit as st
 import os
+import sys
+import logging
+
+def ensure_pytsk3():
+    """
+    Ensures pytsk3 is available for file system parsing.
+    Shows user-friendly error message with install instructions if not available.
+    Returns True if pytsk3 is available, otherwise stops execution.
+    """
+    try:
+        import pytsk3  # noqa: F401
+        return True
+    except Exception as exc:
+        install_hint = """pytsk3 is required for real file system parsing. Install with:
+
+**Debian/Ubuntu:**
+```bash
+sudo apt-get update
+sudo apt-get install -y libtsk-dev
+pip install pytsk3
+```
+
+**macOS (with Homebrew):**
+```bash
+brew install sleuthkit
+pip install pytsk3
+```
+
+**Windows:**
+```bash
+# Install Visual C++ Build Tools first, then:
+pip install pytsk3
+```
+
+**Docker/CI (Debian-based):**
+```dockerfile
+RUN apt-get update && apt-get install -y libtsk-dev && pip install pytsk3
+```
+
+For more information, visit: https://github.com/py4n6/pytsk
+"""
+        logging.error("pytsk3 import failed: %s", exc)
+        
+        try:
+            import streamlit as st
+            st.error("⚠️ pytsk3 is required but not installed. Real file system parsing will not work.")
+            st.markdown(f"**Installation Instructions:**\n{install_hint}")
+            st.stop()
+        except Exception:
+            sys.stderr.write("ERROR: pytsk3 is required but not installed.\n")
+            sys.stderr.write(install_hint + "\n")
+            sys.exit(1)
+
+# Ensure pytsk3 is available at module load time
+ensure_pytsk3()
+
+# Now import pytsk3 for use in this module
+import pytsk3
 
 def render_file_parser(case_id, image_info=None):
     """Render the file system parser interface"""
@@ -56,17 +114,37 @@ def render_file_parser(case_id, image_info=None):
                         st.success(f"Marked for extraction: {directory['path']}")
     
     else:
-        st.info("🔍 Real file system parsing requires pytsk3 library")
+        st.info("🔍 Real file system parsing with pytsk3")
+        
+        if not image_info:
+            st.warning("Please upload a device image first")
+            return
+        
+        # TODO: Implement actual partition mounting and file extraction
+        # This is where real pytsk3-based filesystem parsing would occur
         st.code("""
-        try:
-            import pytsk3
-            # Parse image file
-            img = pytsk3.Img_Info(image_path)
-            # Mount partitions
-            # Extract files
-        except ImportError:
-            st.error("pytsk3 not available")
+# Example usage (to be implemented):
+try:
+    image_path = image_info.get('path', '')
+    
+    # Open the disk image
+    img = pytsk3.Img_Info(image_path)
+    
+    # Access the volume system (partition table)
+    # volume = pytsk3.Volume_Info(img)
+    
+    # Iterate through partitions
+    # for partition in volume:
+    #     # Mount and analyze each partition
+    #     # Extract files and directories
+    #     pass
+    
+except Exception as e:
+    st.error(f"Error parsing image: {e}")
         """, language="python")
+        
+        st.info("💡 Real-time filesystem parsing implementation coming soon. For now, use Demo Mode.")
+
 
 def get_key_directories(partition):
     """Get forensically important directories based on partition type"""
