@@ -10,15 +10,15 @@ import random
 
 def render_data_extractor(case_id, image_info=None):
     """Render the data extraction interface"""
-    st.header("📤 Data Extraction")
+    st.header("Data Extraction")
     
     if not image_info:
-        st.warning("⚠️ Please upload a device image first")
+        st.warning("Please upload a device image first")
         return
     
     st.info("Extract digital artifacts from the device image")
     
-    tabs = st.tabs(["📞 Calls & SMS", "💬 Messaging Apps", "👥 Contacts", "📍 Location Data", "🌐 Browser History", "🗑️ Deleted Data"])
+    tabs = st.tabs(["Calls & SMS", "Messaging Apps", "Contacts", "Location Data", "Browser History", "Deleted Data"])
     
     with tabs[0]:
         render_calls_sms_extraction(case_id)
@@ -40,7 +40,7 @@ def render_data_extractor(case_id, image_info=None):
 
 def render_calls_sms_extraction(case_id):
     """Extract call logs and SMS messages"""
-    st.subheader("📞 Call Logs & SMS Messages")
+    st.subheader("Call Logs & SMS Messages")
     
     col1, col2 = st.columns(2)
     
@@ -53,7 +53,7 @@ def render_calls_sms_extraction(case_id):
             add_evidence(case_id, "Call Logs", f"{len(call_data)} call records", 
                         metadata={"count": len(call_data)})
             
-            st.success(f"✅ Extracted {len(call_data)} call records")
+            st.success(f"Extracted {len(call_data)} call records")
     
     with col2:
         if st.button("Extract SMS Messages", type="primary"):
@@ -64,7 +64,7 @@ def render_calls_sms_extraction(case_id):
             add_evidence(case_id, "SMS Messages", f"{len(sms_data)} messages",
                         metadata={"count": len(sms_data)})
             
-            st.success(f"✅ Extracted {len(sms_data)} SMS messages")
+            st.success(f"Extracted {len(sms_data)} SMS messages")
     
     if 'call_logs' in st.session_state:
         st.write("**Call Logs:**")
@@ -76,7 +76,7 @@ def render_calls_sms_extraction(case_id):
 
 def render_messaging_extraction(case_id):
     """Extract WhatsApp and other messaging app data"""
-    st.subheader("💬 Messaging Apps")
+    st.subheader("Messaging Apps")
     
     app_choice = st.selectbox("Select Messaging App", ["WhatsApp", "Telegram", "Signal", "Facebook Messenger"])
     
@@ -88,7 +88,7 @@ def render_messaging_extraction(case_id):
         add_evidence(case_id, f"{app_choice} Chats", f"{len(chat_data)} messages",
                     metadata={"app": app_choice, "count": len(chat_data)})
         
-        st.success(f"✅ Extracted {len(chat_data)} {app_choice} messages")
+        st.success(f"Extracted {len(chat_data)} {app_choice} messages")
     
     if 'chat_data' in st.session_state:
         st.dataframe(st.session_state['chat_data'], use_container_width=True)
@@ -109,14 +109,14 @@ def render_contacts_extraction(case_id):
         add_evidence(case_id, "Contacts", f"{len(contacts)} contacts",
                     metadata={"count": len(contacts)})
         
-        st.success(f"✅ Extracted {len(contacts)} contacts")
+        st.success(f"Extracted {len(contacts)} contacts")
     
     if 'contacts' in st.session_state:
         st.dataframe(st.session_state['contacts'], use_container_width=True)
 
 def render_location_extraction(case_id):
     """Extract GPS and location data"""
-    st.subheader("📍 Location Data")
+    st.subheader("Location Data")
     
     if st.button("Extract Location History", type="primary"):
         locations = generate_demo_locations()
@@ -126,15 +126,15 @@ def render_location_extraction(case_id):
         add_evidence(case_id, "Location Data", f"{len(locations)} location points",
                     metadata={"count": len(locations)})
         
-        st.success(f"✅ Extracted {len(locations)} location data points")
+        st.success(f"Extracted {len(locations)} location data points")
     
     if 'locations' in st.session_state:
         st.dataframe(st.session_state['locations'], use_container_width=True)
-        st.info("📌 View location map in the 'Visualization' tab")
+        st.info("View location map in the 'Visualization' tab")
 
 def render_browser_extraction(case_id):
     """Extract browser history"""
-    st.subheader("🌐 Browser History")
+    st.subheader("Browser History")
     
     browser = st.selectbox("Select Browser", ["Chrome", "Firefox", "Safari", "Edge"])
     
@@ -146,14 +146,14 @@ def render_browser_extraction(case_id):
         add_evidence(case_id, f"{browser} History", f"{len(history)} records",
                     metadata={"browser": browser, "count": len(history)})
         
-        st.success(f"✅ Extracted {len(history)} browsing records")
+        st.success(f"Extracted {len(history)} browsing records")
     
     if 'browser_history' in st.session_state:
         st.dataframe(st.session_state['browser_history'], use_container_width=True)
 
 def render_deleted_data_extraction(case_id):
     """Extract deleted/hidden data"""
-    st.subheader("🗑️ Deleted & Hidden Data")
+    st.subheader("Deleted & Hidden Data")
     
     st.info("Scanning unallocated space for deleted artifacts...")
     
@@ -166,7 +166,7 @@ def render_deleted_data_extraction(case_id):
             add_evidence(case_id, "Deleted Files", f"{len(deleted_files)} recoverable files",
                         metadata={"count": len(deleted_files)})
         
-        st.success(f"✅ Found {len(deleted_files)} potentially recoverable files")
+        st.success(f"Found {len(deleted_files)} potentially recoverable files")
     
     if 'deleted_files' in st.session_state:
         st.dataframe(st.session_state['deleted_files'], use_container_width=True)
