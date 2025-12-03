@@ -40,7 +40,7 @@ def render_data_extractor(case_id, image_info=None):
 
 def render_calls_sms_extraction(case_id):
     """Extract call logs and SMS messages"""
-    st.subheader("📞 Call Logs & SMS Messages")
+    st.subheader("Call Logs & SMS Messages")
     
     col1, col2 = st.columns(2)
     
@@ -130,7 +130,7 @@ def render_location_extraction(case_id):
     
     if 'locations' in st.session_state:
         st.dataframe(st.session_state['locations'], use_container_width=True)
-        st.info("📌 View location map in the 'Visualization' tab")
+        st.info("View location map in the 'Visualization' tab")
 
 def render_browser_extraction(case_id):
     """Extract browser history"""

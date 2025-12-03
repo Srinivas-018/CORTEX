@@ -114,18 +114,18 @@ def render_home():
     
     st.divider()
     
-    with st.expander("ℹAbout CORTEX"):
+    with st.expander("ℹ️ About CORTEX"):
         st.markdown("""
         **CORTEX** (Comprehensive Offline Retrieval and Tracking Evidence eXtractor) 
         is a professional mobile device forensics analysis platform.
         
         **Key Features:**
-        - 📱 Process mobile device images (.img, .bin, .dd)
-        - 🔍 Extract SMS, calls, WhatsApp, and other artifacts
-        - 📊 Timeline reconstruction and analysis
-        - 🗺️ Location tracking and visualization
-        - 🔐 SHA-256 hash verification & chain of custody
-        - 📄 Professional PDF forensic reports
+        - Process mobile device images (.img, .bin, .dd)
+        - Extract SMS, calls, WhatsApp, and other artifacts
+        - Timeline reconstruction and analysis
+        - Location tracking and visualization
+        - SHA-256 hash verification & chain of custody
+        - Professional PDF forensic reports
         
         **Supported Evidence Types:**
         - Call logs and SMS messages
@@ -209,7 +209,7 @@ def main():
     with st.sidebar:
         st.image("https://via.placeholder.com/200x80/1f77b4/ffffff?text=CORTEX", use_container_width=True)
         
-        st.markdown("###  Forensics Platform")
+        st.markdown("### 🔍 Forensics Platform")
         
         if st.session_state.get('current_case'):
             case = get_case(st.session_state['current_case'])
@@ -224,7 +224,7 @@ def main():
         
         st.markdown("### Quick Actions")
         
-        if st.button("Home", use_container_width=True):
+        if st.button("🏠 Dashboard", use_container_width=True):
             st.session_state['current_case'] = None
             st.rerun()
         
