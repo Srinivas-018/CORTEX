@@ -40,7 +40,7 @@ env/
 Thumbs.db
 
 # Streamlit
-.streamlit/
+.streamlit/secrets.toml
 
 # Testing
 .pytest_cache/
@@ -49,3 +49,32 @@ htmlcov/
 
 # Logs
 *.log
+
+# Environment variables (sensitive)
+.env
+.env.local
+.env.production
+
+# AWS credentials (never commit these!)
+.aws/
+aws-credentials.txt
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# Database files (if you want to exclude local dev DB)
+# *.db
+# *.sqlite
+# *.sqlite3
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# SSL certificates (never commit these!)
+*.pem
+*.key
+*.crt
+ssl/
