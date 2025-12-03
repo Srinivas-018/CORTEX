@@ -10,7 +10,7 @@ import pandas as pd
 
 def render_report_generator(case_id):
     """Render the report generation interface"""
-    st.header("📄 Forensic Report Generation")
+    st.header("Forensic Report Generation")
     
     from database.db_manager import get_case, get_case_evidence, get_chain_of_custody
     
@@ -79,10 +79,10 @@ def render_report_generator(case_id):
                 if isinstance(pdf_output, str):
                     pdf_output = pdf_output.encode('latin-1')
                 
-                st.success("✅ Report generated successfully!")
+                st.success("Report generated successfully!")
                 
                 st.download_button(
-                    label="📥 Download PDF Report",
+                    label="Download PDF Report",
                     data=pdf_output,
                     file_name=f"forensic_report_{case_id}_{datetime.now().strftime('%Y%m%d')}.pdf",
                     mime="application/pdf"
