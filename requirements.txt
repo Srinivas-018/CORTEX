@@ -14,11 +14,3 @@ exifread
 # fpdf is used for PDF report generation (Report Generation module)
 fpdf
 
-# Development/Utility Libraries (less critical, often built-in or easy to get)
-# If you are using external modules not shown, they might need additional packages.
-# Assuming standard built-in libraries like os, sys, pathlib, json, csv, datetime, uuid, hashlib are used.
-exifread
-pandas
-Pillow
-plotly
-streamlit
