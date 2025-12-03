@@ -36,10 +36,10 @@ def init_session_state():
 
 def render_home():
     """Render the home/dashboard page"""
-    st.title("🔍 CORTEX - Mobile Device Forensics Analyzer")
+    st.title("CORTEX - Mobile Device Forensics Analyzer")
     st.markdown("### Professional Forensic Analysis Platform")
     
-    st.info("📱 Analyze mobile device images • Extract digital evidence • Generate forensic reports")
+    st.info("Analyze mobile device images • Extract digital evidence • Generate forensic reports")
     
     col1, col2, col3, col4 = st.columns(4)
     
@@ -54,7 +54,7 @@ def render_home():
     
     st.divider()
     
-    st.subheader("🗂️ Case Management")
+    st.subheader("Case Management")
     
     cases = get_all_cases()
     
@@ -77,7 +77,7 @@ def render_home():
                     success = create_case(case_id, case_name, investigator, device_info, notes)
                     if success:
                         st.session_state['investigator'] = investigator
-                        st.success(f"✅ Case {case_id} created successfully!")
+                        st.success(f"Case {case_id} created successfully!")
                         st.rerun()
                     else:
                         st.error("Case ID already exists")
@@ -89,7 +89,7 @@ def render_home():
             st.write("**Existing Cases:**")
             
             for case in cases:
-                with st.expander(f"📁 {case[0]} - {case[1]} ({case[7]})"):
+                with st.expander(f"{case[0]} - {case[1]} ({case[7]})"):
                     col_a, col_b = st.columns([3, 1])
                     
                     with col_a:
@@ -114,18 +114,18 @@ def render_home():
     
     st.divider()
     
-    with st.expander("ℹ️ About CORTEX"):
+    with st.expander("About CORTEX"):
         st.markdown("""
         **CORTEX** (Comprehensive Offline Retrieval and Tracking Evidence eXtractor) 
         is a professional mobile device forensics analysis platform.
         
         **Key Features:**
-        - 📱 Process mobile device images (.img, .bin, .dd)
-        - 🔍 Extract SMS, calls, WhatsApp, and other artifacts
-        - 📊 Timeline reconstruction and analysis
-        - 🗺️ Location tracking and visualization
-        - 🔐 SHA-256 hash verification & chain of custody
-        - 📄 Professional PDF forensic reports
+        - Process mobile device images (.img, .bin, .dd)
+        - Extract SMS, calls, WhatsApp, and other artifacts
+        - Timeline reconstruction and analysis
+        - Location tracking and visualization
+        - SHA-256 hash verification & chain of custody
+        - Professional PDF forensic reports
         
         **Supported Evidence Types:**
         - Call logs and SMS messages
@@ -153,7 +153,7 @@ def render_case_view(case_id):
     col1, col2, col3 = st.columns([2, 1, 1])
     
     with col1:
-        st.title(f"📁 {case[0]}")
+        st.title(f"{case[0]}")
         st.caption(f"{case[1]} • Investigator: {case[2]} • Status: {case[7]}")
     
     with col2:
@@ -167,12 +167,12 @@ def render_case_view(case_id):
     st.divider()
     
     tabs = st.tabs([
-        "📱 Image Input", 
-        "🗂️ File System", 
-        "📤 Data Extraction", 
-        "🔍 Analysis", 
-        "📊 Visualization", 
-        "📄 Reports"
+        "Image Input", 
+        "File System", 
+        "Data Extraction", 
+        "Analysis", 
+        "Visualization", 
+        "Reports"
     ])
     
     image_info = None
@@ -209,7 +209,7 @@ def main():
     with st.sidebar:
         st.image("https://via.placeholder.com/200x80/1f77b4/ffffff?text=CORTEX", use_container_width=True)
         
-        st.markdown("### 🔍 Forensics Platform")
+        st.markdown("### Forensics Platform")
         
         if st.session_state.get('current_case'):
             case = get_case(st.session_state['current_case'])
@@ -224,13 +224,13 @@ def main():
         
         st.markdown("### Quick Actions")
         
-        if st.button("🏠 Dashboard", use_container_width=True):
+        if st.button("Dashboard", use_container_width=True):
             st.session_state['current_case'] = None
             st.rerun()
         
         st.divider()
         
-        with st.expander("⚙️ System Info"):
+        with st.expander("System Info"):
             st.write("**Version:** 1.0.0")
             st.write("**Database:** SQLite")
             st.write("**Status:** Ready")
