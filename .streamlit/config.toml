@@ -1,5 +1,4 @@
 [server]
 # Set maximum upload size in MB. 500 GB = 512000 MB (using 1 GB = 1024 MB)
 maxUploadSize = 512000
-# Set to a very high value, like 1800 seconds (30 minutes)
-clientRequestTimeout = 1800
+
