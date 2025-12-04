@@ -97,7 +97,7 @@ def render_file_parser(case_id, image_info=None):
                             
                             if partition_data:
                                 import pandas as pd
-                                st.dataframe(pd.DataFrame(partition_data), use_container_width=True)
+                                st.dataframe(pd.DataFrame(partition_data), width='stretch')
                             else:
                                 st.warning("No allocated partitions found")
                                 
