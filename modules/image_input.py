@@ -6,17 +6,46 @@ Handles upload and verification of mobile device images (.img, .bin, .dd)
 import streamlit as st
 import hashlib
 from pathlib import Path
+import tempfile
+import os
 
-def calculate_hash(file_bytes, algorithm='sha256'):
-    """Calculate hash of file content"""
+# Chunk size for processing large files (8MB chunks)
+CHUNK_SIZE = 8 * 1024 * 1024
+
+def calculate_hash_chunked(uploaded_file, algorithm='sha256'):
+    """
+    Calculate hash of file content using chunked reading.
+    This prevents memory overflow for large files.
+    """
     hash_obj = hashlib.new(algorithm)
-    hash_obj.update(file_bytes)
+    
+    # Reset file pointer to beginning
+    try:
+        uploaded_file.seek(0)
+    except Exception:
+        pass
+    
+    # Read and hash in chunks
+    bytes_read = 0
+    while True:
+        chunk = uploaded_file.read(CHUNK_SIZE)
+        if not chunk:
+            break
+        hash_obj.update(chunk)
+        bytes_read += len(chunk)
+    
+    # Reset file pointer for potential reuse
+    try:
+        uploaded_file.seek(0)
+    except Exception:
+        pass
+    
     return hash_obj.hexdigest()
 
 def save_uploaded_file_to_disk(uploaded_file, dest_path=None):
     """Save Streamlit uploaded_file to disk in chunks. Returns path."""
     if dest_path is None:
-        tmp = tempfile.NamedTemporaryFile(delete=False)
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.img')
         dest_path = tmp.name
         tmp.close()
 
@@ -40,6 +69,16 @@ def save_uploaded_file_to_disk(uploaded_file, dest_path=None):
         pass
 
     return dest_path
+
+def get_file_size_mb(uploaded_file):
+    """Get file size in MB without loading entire file into memory"""
+    try:
+        uploaded_file.seek(0, 2)  # Seek to end
+        size_bytes = uploaded_file.tell()
+        uploaded_file.seek(0)  # Reset to beginning
+        return size_bytes / (1024 * 1024)
+    except Exception:
+        return 0
 
 def render_image_input(case_id):
     """Render the image input and verification interface"""
