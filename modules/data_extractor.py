@@ -234,25 +234,35 @@ def render_browser_extraction(case_id, image_info, extraction_mode):
             csv = st.session_state['browser_history'].to_csv(index=False)
             st.download_button("Download CSV", csv, f"browser_history_{case_id}.csv", "text/csv")
 
-def render_deleted_data_extraction(case_id):
+def render_deleted_data_extraction(case_id, image_info, extraction_mode):
     """Extract deleted/hidden data"""
     st.subheader("Deleted & Hidden Data")
     
-    st.info("Scanning unallocated space for deleted artifacts...")
+    is_real_mode = extraction_mode == "Real Extraction"
+    
+    st.info("🔍 Scanning unallocated space for deleted artifacts...")
     
     if st.button("Scan for Deleted Data", type="primary"):
         with st.spinner("Scanning..."):
             deleted_files = generate_demo_deleted_files()
+            
+            if is_real_mode:
+                st.warning("⚠️ Real deleted file recovery requires specialized carving tools. Using demo data.")
+            
             st.session_state['deleted_files'] = deleted_files
             
             from database.db_manager import add_evidence
             add_evidence(case_id, "Deleted Files", f"{len(deleted_files)} recoverable files",
-                        metadata={"count": len(deleted_files)})
+                        metadata={"count": len(deleted_files), "mode": extraction_mode})
         
-        st.success(f"Found {len(deleted_files)} potentially recoverable files")
+        st.success(f"✅ Found {len(deleted_files)} potentially recoverable files")
     
     if 'deleted_files' in st.session_state:
         st.dataframe(st.session_state['deleted_files'], use_container_width=True)
+        
+        if st.button("Export Deleted Files List (CSV)"):
+            csv = st.session_state['deleted_files'].to_csv(index=False)
+            st.download_button("Download CSV", csv, f"deleted_files_{case_id}.csv", "text/csv")
 
 def generate_demo_call_logs():
     """Generate demo call log data"""
