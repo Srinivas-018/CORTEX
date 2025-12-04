@@ -175,23 +175,34 @@ def render_contacts_extraction(case_id, image_info, extraction_mode):
             csv = st.session_state['contacts'].to_csv(index=False)
             st.download_button("Download CSV", csv, f"contacts_{case_id}.csv", "text/csv")
 
-def render_location_extraction(case_id):
+def render_location_extraction(case_id, image_info, extraction_mode):
     """Extract GPS and location data"""
     st.subheader("Location Data")
     
+    is_real_mode = extraction_mode == "Real Extraction"
+    
     if st.button("Extract Location History", type="primary"):
-        locations = generate_demo_locations()
-        st.session_state['locations'] = locations
-        
-        from database.db_manager import add_evidence
-        add_evidence(case_id, "Location Data", f"{len(locations)} location points",
-                    metadata={"count": len(locations)})
-        
-        st.success(f"Extracted {len(locations)} location data points")
+        with st.spinner("Extracting location data..."):
+            if is_real_mode:
+                locations = extract_real_location_data(image_info.get('file_path'))
+            else:
+                locations = generate_demo_locations()
+            
+            st.session_state['locations'] = locations
+            
+            from database.db_manager import add_evidence
+            add_evidence(case_id, "Location Data", f"{len(locations)} location points",
+                        metadata={"count": len(locations), "mode": extraction_mode})
+            
+            st.success(f"✅ Extracted {len(locations)} location data points ({extraction_mode})")
     
     if 'locations' in st.session_state:
         st.dataframe(st.session_state['locations'], use_container_width=True)
-        st.info("View location map in the 'Visualization' tab")
+        st.info("📍 View location map in the 'Visualization' tab")
+        
+        if st.button("Export Locations (CSV)"):
+            csv = st.session_state['locations'].to_csv(index=False)
+            st.download_button("Download CSV", csv, f"locations_{case_id}.csv", "text/csv")
 
 def render_browser_extraction(case_id):
     """Extract browser history"""
