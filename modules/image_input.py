@@ -213,32 +213,47 @@ def render_image_input(case_id):
     
     return None
 
-def analyze_image_structure(file_bytes):
-    """Analyze basic structure of the device image"""
+def analyze_image_structure_chunked(uploaded_file):
+    """Analyze basic structure of the device image without loading entire file"""
     metadata = {}
     
-    metadata['Total Size'] = f"{len(file_bytes):,} bytes"
-    metadata['Size (MB)'] = f"{len(file_bytes) / (1024*1024):.2f} MB"
-    metadata['Size (GB)'] = f"{len(file_bytes) / (1024*1024*1024):.2f} GB"
-    
-    header = file_bytes[:512] if len(file_bytes) >= 512 else file_bytes
-    
-    if b'Android' in header or b'ANDROID' in header:
-        metadata['Detected OS'] = 'Android'
-    elif b'Apple' in header or b'iOS' in header:
-        metadata['Detected OS'] = 'iOS'
-    else:
-        metadata['Detected OS'] = 'Unknown'
-    
-    if header.startswith(b'\xEB\x52\x90') or header.startswith(b'\xEB\x76\x90'):
-        metadata['File System Type'] = 'FAT32 (Suspected)'
-    elif header.startswith(b'\xEB\x58\x90'):
-        metadata['File System Type'] = 'exFAT (Suspected)'
-    elif b'ext4' in header or b'EXT4' in header:
-        metadata['File System Type'] = 'ext4 (Suspected)'
-    else:
-        metadata['File System Type'] = 'Unknown / Raw'
-    
-    metadata['Parseable'] = 'Yes' if len(file_bytes) > 1024 else 'No (too small)'
+    try:
+        # Get file size
+        uploaded_file.seek(0, 2)
+        total_bytes = uploaded_file.tell()
+        uploaded_file.seek(0)
+        
+        metadata['Total Size'] = f"{total_bytes:,} bytes"
+        metadata['Size (MB)'] = f"{total_bytes / (1024*1024):.2f} MB"
+        metadata['Size (GB)'] = f"{total_bytes / (1024*1024*1024):.2f} GB"
+        
+        # Read only first 4KB for header analysis
+        header = uploaded_file.read(4096)
+        uploaded_file.seek(0)
+        
+        # Detect OS
+        if b'Android' in header or b'ANDROID' in header:
+            metadata['Detected OS'] = 'Android'
+        elif b'Apple' in header or b'iOS' in header or b'HFS' in header:
+            metadata['Detected OS'] = 'iOS'
+        else:
+            metadata['Detected OS'] = 'Unknown'
+        
+        # Detect file system type
+        if header.startswith(b'\xEB\x52\x90') or header.startswith(b'\xEB\x76\x90'):
+            metadata['File System Type'] = 'FAT32 (Suspected)'
+        elif header.startswith(b'\xEB\x58\x90'):
+            metadata['File System Type'] = 'exFAT (Suspected)'
+        elif b'ext4' in header or b'EXT4' in header:
+            metadata['File System Type'] = 'ext4 (Suspected)'
+        elif b'ext3' in header or b'EXT3' in header:
+            metadata['File System Type'] = 'ext3 (Suspected)'
+        else:
+            metadata['File System Type'] = 'Unknown / Raw'
+        
+        metadata['Parseable'] = 'Yes' if total_bytes > 1024 else 'No (too small)'
+        
+    except Exception as e:
+        metadata['Error'] = str(e)
     
     return metadata
