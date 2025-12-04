@@ -21,25 +21,43 @@ def render_data_extractor(case_id, image_info=None):
     
     st.info("Extract digital artifacts from the device image")
     
+    # Mode selector
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.write(f"**Image:** {image_info.get('filename', 'Unknown')}")
+    with col2:
+        extraction_mode = st.selectbox(
+            "Mode", 
+            ["Demo Mode", "Real Extraction"],
+            help="Demo Mode generates sample data. Real Extraction parses actual databases from the image."
+        )
+    
+    # Store mode in session state
+    st.session_state['extraction_mode'] = extraction_mode
+    
+    if extraction_mode == "Real Extraction" and not image_info.get('file_path'):
+        st.warning("⚠️ Real extraction requires the image file to be saved. Please click 'Verify & Process Image' first.")
+        extraction_mode = "Demo Mode"
+    
     tabs = st.tabs(["Calls & SMS", "Messaging Apps", "Contacts", "Location Data", "Browser History", "Deleted Data"])
     
     with tabs[0]:
-        render_calls_sms_extraction(case_id)
+        render_calls_sms_extraction(case_id, image_info, extraction_mode)
     
     with tabs[1]:
-        render_messaging_extraction(case_id)
+        render_messaging_extraction(case_id, image_info, extraction_mode)
     
     with tabs[2]:
-        render_contacts_extraction(case_id)
+        render_contacts_extraction(case_id, image_info, extraction_mode)
     
     with tabs[3]:
-        render_location_extraction(case_id)
+        render_location_extraction(case_id, image_info, extraction_mode)
     
     with tabs[4]:
-        render_browser_extraction(case_id)
+        render_browser_extraction(case_id, image_info, extraction_mode)
     
     with tabs[5]:
-        render_deleted_data_extraction(case_id)
+        render_deleted_data_extraction(case_id, image_info, extraction_mode)
 
 def render_calls_sms_extraction(case_id):
     """Extract call logs and SMS messages"""
