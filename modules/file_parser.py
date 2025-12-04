@@ -17,7 +17,11 @@ def render_file_parser(case_id, image_info=None):
     
     st.info(f"Analyzing file system from: **{image_info.get('filename', 'Unknown')}**")
     
-    demo_mode = st.checkbox("🎭 Use Demo Mode (Simulated Data)", value=True)
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.write(f"**File Size:** {image_info.get('size', 0):.2f} MB")
+    with col2:
+        demo_mode = st.checkbox("Demo Mode", value=True, help="Toggle between demo data and real file system parsing")
     
     if demo_mode:
         st.subheader("📂 Detected Partitions")
