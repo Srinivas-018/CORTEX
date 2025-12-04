@@ -61,17 +61,75 @@ def render_file_parser(case_id, image_info=None):
                         st.success(f"✅ Marked for extraction: {directory['path']}")
     
     else:
-        st.info("🔍 Real file system parsing requires pytsk3 library")
-        st.code("""
-        try:
-            import pytsk3
-            # Parse image file
-            img = pytsk3.Img_Info(image_path)
-            # Mount partitions
-            # Extract files
-        except ImportError:
-            st.error("pytsk3 not available")
-        """, language="python")
+        st.subheader("📂 Real File System Parsing")
+        st.info("🔍 Attempting to parse real file system using pytsk3...")
+        
+        if st.button("Parse File System", type="primary"):
+            with st.spinner("Parsing file system..."):
+                try:
+                    import pytsk3
+                    
+                    image_path = image_info.get('file_path', '')
+                    
+                    if not image_path or not os.path.exists(image_path):
+                        st.error("❌ Image file not found. Please verify and process the image first.")
+                    else:
+                        # Try to open the image
+                        img_info = pytsk3.Img_Info(image_path)
+                        st.success(f"✅ Successfully opened image file: {image_path}")
+                        st.write(f"**Image Size:** {img_info.get_size() / (1024*1024*1024):.2f} GB")
+                        
+                        # Try to get volume info
+                        try:
+                            volume_info = pytsk3.Volume_Info(img_info)
+                            st.write(f"**Partitions Found:** {len(volume_info)}")
+                            
+                            partition_data = []
+                            for partition in volume_info:
+                                if partition.flags == pytsk3.TSK_VS_PART_FLAG_ALLOC:
+                                    partition_data.append({
+                                        "Index": partition.addr,
+                                        "Start": partition.start,
+                                        "Length": partition.len,
+                                        "Description": partition.desc.decode('utf-8', errors='ignore'),
+                                        "Size (MB)": (partition.len * 512) / (1024 * 1024)
+                                    })
+                            
+                            if partition_data:
+                                import pandas as pd
+                                st.dataframe(pd.DataFrame(partition_data), use_container_width=True)
+                            else:
+                                st.warning("No allocated partitions found")
+                                
+                        except Exception as e:
+                            st.warning(f"Could not parse partitions: {str(e)}")
+                            st.info("This may be a raw file system image without partition table")
+                        
+                except ImportError:
+                    st.error("❌ pytsk3 library not available")
+                    st.info("Install with: pip install pytsk3")
+                except Exception as e:
+                    st.error(f"❌ Error parsing file system: {str(e)}")
+                    st.info("The image file may be corrupted or in an unsupported format")
+        
+        with st.expander("ℹ️ About Real File System Parsing"):
+            st.markdown("""
+            **Real parsing capabilities:**
+            - Extract partition table information
+            - Browse file system directories
+            - Extract individual files
+            - Recover deleted files
+            
+            **Requirements:**
+            - pytsk3 library installed
+            - Valid forensic image file (.img, .dd, .raw)
+            - Sufficient disk space for extraction
+            
+            **Limitations:**
+            - Encrypted file systems require decryption keys
+            - Some proprietary formats may not be supported
+            - Large images may take time to process
+            """)
 
 def get_key_directories(partition):
     """Get forensically important directories based on partition type"""
