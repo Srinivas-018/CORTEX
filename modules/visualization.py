@@ -42,7 +42,7 @@ def render_charts():
             names=call_type_counts.index,
             title="Call Distribution by Type"
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
         
         call_logs['Hour'] = pd.to_datetime(call_logs['Timestamp']).dt.hour
         hourly_calls = call_logs.groupby('Hour').size()
@@ -53,7 +53,7 @@ def render_charts():
             labels={'x': 'Hour of Day', 'y': 'Number of Calls'},
             title="Call Activity by Hour of Day"
         )
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width='stretch')
     
     if 'sms_data' in st.session_state:
         st.write("**SMS Activity Analysis**")
@@ -69,7 +69,7 @@ def render_charts():
             labels={'x': 'Message Count', 'y': 'Contact'},
             title="Top 10 Contacts by SMS Volume"
         )
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(fig3, width='stretch')
     
     if 'browser_history' in st.session_state:
         st.write("**Browser Activity Analysis**")
@@ -84,7 +84,7 @@ def render_charts():
             title="Top 10 Most Visited Websites"
         )
         fig4.update_xaxes(tickangle=45)
-        st.plotly_chart(fig4, use_container_width=True)
+        st.plotly_chart(fig4, width='stretch')
 
 def render_location_map():
     """Render location data on a map"""
@@ -110,11 +110,11 @@ def render_location_map():
             margin={"r":0,"t":40,"l":0,"b":0}
         )
         
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
         
         st.metric("Total Location Points", len(locations))
         
-        st.dataframe(locations, use_container_width=True)
+        st.dataframe(locations, width='stretch')
     
     else:
         st.info("No location data extracted yet. Extract location data from the 'Data Extraction' tab first.")
@@ -144,7 +144,7 @@ def render_timeline_view():
             markers=True
         )
         
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
         
         event_distribution = timeline['Type'].value_counts()
         
@@ -154,7 +154,7 @@ def render_timeline_view():
             labels={'x': 'Event Type', 'y': 'Count'},
             title="Distribution of Events by Type"
         )
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width='stretch')
     
     else:
         st.info("No timeline generated yet. Generate a timeline from the 'Analysis Tools' tab first.")
@@ -200,9 +200,9 @@ def render_communication_network():
         )
         
         fig.update_traces(textposition='top center')
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
         
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width='stretch')
     
     else:
         st.info("Extract call logs and SMS data first to visualize the communication network")
