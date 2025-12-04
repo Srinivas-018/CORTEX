@@ -147,22 +147,33 @@ def render_messaging_extraction(case_id, image_info, extraction_mode):
             csv = st.session_state['chat_data'].to_csv(index=False)
             st.download_button("Download CSV", csv, f"chat_export_{case_id}.csv", "text/csv")
 
-def render_contacts_extraction(case_id):
+def render_contacts_extraction(case_id, image_info, extraction_mode):
     """Extract contacts"""
     st.subheader("Contacts")
     
+    is_real_mode = extraction_mode == "Real Extraction"
+    
     if st.button("Extract Contacts", type="primary"):
-        contacts = generate_demo_contacts()
-        st.session_state['contacts'] = contacts
-        
-        from database.db_manager import add_evidence
-        add_evidence(case_id, "Contacts", f"{len(contacts)} contacts",
-                    metadata={"count": len(contacts)})
-        
-        st.success(f"Extracted {len(contacts)} contacts")
+        with st.spinner("Extracting contacts..."):
+            if is_real_mode:
+                contacts = extract_real_contacts(image_info.get('file_path'))
+            else:
+                contacts = generate_demo_contacts()
+            
+            st.session_state['contacts'] = contacts
+            
+            from database.db_manager import add_evidence
+            add_evidence(case_id, "Contacts", f"{len(contacts)} contacts",
+                        metadata={"count": len(contacts), "mode": extraction_mode})
+            
+            st.success(f"✅ Extracted {len(contacts)} contacts ({extraction_mode})")
     
     if 'contacts' in st.session_state:
         st.dataframe(st.session_state['contacts'], use_container_width=True)
+        
+        if st.button("Export Contacts (CSV)"):
+            csv = st.session_state['contacts'].to_csv(index=False)
+            st.download_button("Download CSV", csv, f"contacts_{case_id}.csv", "text/csv")
 
 def render_location_extraction(case_id):
     """Extract GPS and location data"""
