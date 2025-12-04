@@ -93,69 +93,105 @@ def render_image_input(case_id):
     )
     
     if uploaded_file is not None:
-        file_bytes = uploaded_file.read()
-        file_size_mb = len(file_bytes) / (1024 * 1024)
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.subheader("Image Information")
-            st.write(f"**Filename:**  {uploaded_file.name}")
-            st.write(f"**Size:** {file_size_mb:.2f} MB")
-            st.write(f"**Type:** {uploaded_file.type or 'Binary Image'}")
-        
-        with col2:
-            st.subheader("Hash Verification")
+        try:
+            # Get file size without reading entire file
+            file_size_mb = get_file_size_mb(uploaded_file)
             
-            with st.spinner("Calculating SHA-256 hash..."):
-                sha256_hash = calculate_hash(file_bytes, 'sha256')
+            col1, col2 = st.columns(2)
             
-            st.code(sha256_hash, language="text")
-            st.caption("SHA-256 Hash for Chain of Custody")
+            with col1:
+                st.subheader("Image Information")
+                st.write(f"**Filename:**  {uploaded_file.name}")
+                st.write(f"**Size:** {file_size_mb:.2f} MB ({file_size_mb/1024:.2f} GB)")
+                st.write(f"**Type:** {uploaded_file.type or 'Binary Image'}")
+                
+                if file_size_mb > 100:
+                    st.warning("⚠️ Large file detected. Processing may take some time.")
             
-            md5_hash = calculate_hash(file_bytes, 'md5')
-            st.text(f"MD5: {md5_hash}")
-        
-        st.divider()
-        
-        st.subheader("Image Metadata")
-        
-        metadata = analyze_image_structure(file_bytes)
-        
-        for key, value in metadata.items():
-            st.write(f"**{key}:** {value}")
-        
-        if st.button("✅ Verify & Process Image", type="primary"):
-            from database.db_manager import update_case, add_chain_of_custody, add_evidence
+            with col2:
+                st.subheader("Hash Verification")
+                
+                # Progress bar for hash calculation
+                hash_progress = st.progress(0, text="Calculating SHA-256 hash...")
+                
+                try:
+                    sha256_hash = calculate_hash_chunked(uploaded_file, 'sha256')
+                    hash_progress.progress(50, text="Calculating MD5 hash...")
+                    md5_hash = calculate_hash_chunked(uploaded_file, 'md5')
+                    hash_progress.progress(100, text="Hash calculation complete!")
+                    
+                    st.code(sha256_hash, language="text")
+                    st.caption("SHA-256 Hash for Chain of Custody")
+                    st.text(f"MD5: {md5_hash}")
+                    
+                except Exception as e:
+                    st.error(f"Error calculating hash: {str(e)}")
+                    return None
             
-            update_case(case_id, image_path=uploaded_file.name, image_hash=sha256_hash)
+            st.divider()
             
-            add_evidence(
-                case_id, 
-                "Device Image", 
-                uploaded_file.name,
-                file_path=uploaded_file.name,
-                hash_value=sha256_hash,
-                metadata=metadata
-            )
+            st.subheader("Image Metadata")
             
-            add_chain_of_custody(
-                case_id, 
-                "Image Uploaded", 
-                st.session_state.get('investigator', 'Unknown'),
-                f"Uploaded and verified {uploaded_file.name} (SHA-256: {sha256_hash[:16]}...)"
-            )
+            # Analyze only first few MB for metadata to avoid memory issues
+            metadata_progress = st.progress(0, text="Analyzing image structure...")
+            metadata = analyze_image_structure_chunked(uploaded_file)
+            metadata_progress.progress(100, text="Analysis complete!")
             
-            st.success("✅ Image verified and added to case evidence!")
-            st.balloons()
-        
-        return {
-            'filename': uploaded_file.name,
-            'size': file_size_mb,
-            'sha256': sha256_hash,
-            'md5': md5_hash,
-            'metadata': metadata
-        }
+            for key, value in metadata.items():
+                st.write(f"**{key}:** {value}")
+            
+            # Save file to disk for processing
+            col_btn1, col_btn2 = st.columns(2)
+            
+            with col_btn1:
+                if st.button("✅ Verify & Process Image", type="primary"):
+                    with st.spinner("Saving image file..."):
+                        try:
+                            # Save to temporary location
+                            temp_path = save_uploaded_file_to_disk(uploaded_file)
+                            
+                            from database.db_manager import update_case, add_chain_of_custody, add_evidence
+                            
+                            update_case(case_id, image_path=temp_path, image_hash=sha256_hash)
+                            
+                            add_evidence(
+                                case_id, 
+                                "Device Image", 
+                                uploaded_file.name,
+                                file_path=temp_path,
+                                hash_value=sha256_hash,
+                                metadata=metadata
+                            )
+                            
+                            add_chain_of_custody(
+                                case_id, 
+                                "Image Uploaded", 
+                                st.session_state.get('investigator', 'Unknown'),
+                                f"Uploaded and verified {uploaded_file.name} (SHA-256: {sha256_hash[:16]}...)"
+                            )
+                            
+                            # Store image path in session state
+                            st.session_state['image_path'] = temp_path
+                            
+                            st.success("✅ Image verified and added to case evidence!")
+                            st.balloons()
+                        except Exception as e:
+                            st.error(f"Error saving image: {str(e)}")
+                            return None
+            
+            return {
+                'filename': uploaded_file.name,
+                'size': file_size_mb,
+                'sha256': sha256_hash,
+                'md5': md5_hash,
+                'metadata': metadata,
+                'file_path': st.session_state.get('image_path', '')
+            }
+            
+        except Exception as e:
+            st.error(f"Error processing file: {str(e)}")
+            st.error("This may be due to insufficient memory. Please try a smaller file or contact support.")
+            return None
     
     else:
         st.warning("⚠️ No device image uploaded yet")
