@@ -59,41 +59,61 @@ def render_data_extractor(case_id, image_info=None):
     with tabs[5]:
         render_deleted_data_extraction(case_id, image_info, extraction_mode)
 
-def render_calls_sms_extraction(case_id):
+def render_calls_sms_extraction(case_id, image_info, extraction_mode):
     """Extract call logs and SMS messages"""
     st.subheader("Call Logs & SMS Messages")
+    
+    is_real_mode = extraction_mode == "Real Extraction"
     
     col1, col2 = st.columns(2)
     
     with col1:
         if st.button("Extract Call Logs", type="primary"):
-            call_data = generate_demo_call_logs()
-            st.session_state['call_logs'] = call_data
-            
-            from database.db_manager import add_evidence
-            add_evidence(case_id, "Call Logs", f"{len(call_data)} call records", 
-                        metadata={"count": len(call_data)})
-            
-            st.success(f"Extracted {len(call_data)} call records")
+            with st.spinner("Extracting call logs..."):
+                if is_real_mode:
+                    call_data = extract_real_call_logs(image_info.get('file_path'))
+                else:
+                    call_data = generate_demo_call_logs()
+                
+                st.session_state['call_logs'] = call_data
+                
+                from database.db_manager import add_evidence
+                add_evidence(case_id, "Call Logs", f"{len(call_data)} call records", 
+                            metadata={"count": len(call_data), "mode": extraction_mode})
+                
+                st.success(f"✅ Extracted {len(call_data)} call records ({extraction_mode})")
     
     with col2:
         if st.button("Extract SMS Messages", type="primary"):
-            sms_data = generate_demo_sms()
-            st.session_state['sms_data'] = sms_data
-            
-            from database.db_manager import add_evidence
-            add_evidence(case_id, "SMS Messages", f"{len(sms_data)} messages",
-                        metadata={"count": len(sms_data)})
-            
-            st.success(f"Extracted {len(sms_data)} SMS messages")
+            with st.spinner("Extracting SMS messages..."):
+                if is_real_mode:
+                    sms_data = extract_real_sms(image_info.get('file_path'))
+                else:
+                    sms_data = generate_demo_sms()
+                
+                st.session_state['sms_data'] = sms_data
+                
+                from database.db_manager import add_evidence
+                add_evidence(case_id, "SMS Messages", f"{len(sms_data)} messages",
+                            metadata={"count": len(sms_data), "mode": extraction_mode})
+                
+                st.success(f"✅ Extracted {len(sms_data)} SMS messages ({extraction_mode})")
     
     if 'call_logs' in st.session_state:
         st.write("**Call Logs:**")
         st.dataframe(st.session_state['call_logs'], use_container_width=True)
+        
+        if st.button("Export Call Logs (CSV)"):
+            csv = st.session_state['call_logs'].to_csv(index=False)
+            st.download_button("Download CSV", csv, f"call_logs_{case_id}.csv", "text/csv")
     
     if 'sms_data' in st.session_state:
         st.write("**SMS Messages:**")
         st.dataframe(st.session_state['sms_data'], use_container_width=True)
+        
+        if st.button("Export SMS (CSV)"):
+            csv = st.session_state['sms_data'].to_csv(index=False)
+            st.download_button("Download CSV", csv, f"sms_{case_id}.csv", "text/csv")
 
 def render_messaging_extraction(case_id):
     """Extract WhatsApp and other messaging app data"""
