@@ -207,7 +207,7 @@ def main():
     init_session_state()
     
     with st.sidebar:
-        st.image("https://via.placeholder.com/200x80/1f77b4/ffffff?text=CORTEX", use_container_width=True)
+        st.image("https://via.placeholder.com/200x80/1f77b4/ffffff?text=CORTEX", width='stretch')
         
         st.markdown("### 🔍 Forensics Platform")
         
@@ -224,7 +224,7 @@ def main():
         
         st.markdown("### Quick Actions")
         
-        if st.button("🏠 Dashboard", use_container_width=True):
+        if st.button("🏠 Dashboard", width='stretch'):
             st.session_state['current_case'] = None
             st.rerun()
         
