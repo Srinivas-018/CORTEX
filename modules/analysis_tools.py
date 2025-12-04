@@ -53,7 +53,7 @@ def render_timeline_reconstruction():
         
         st.dataframe(
             filtered_timeline.sort_values('Timestamp', ascending=False),
-            use_container_width=True,
+            width='stretch',
             height=400
         )
         
@@ -85,7 +85,7 @@ def render_keyword_search():
             st.warning("No matches found")
     
     if 'search_results' in st.session_state and len(st.session_state['search_results']) > 0:
-        st.dataframe(st.session_state['search_results'], use_container_width=True)
+        st.dataframe(st.session_state['search_results'], width='stretch')
 
 def render_statistics(case_id):
     """Display statistics about extracted data"""
