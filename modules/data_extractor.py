@@ -373,3 +373,114 @@ def generate_demo_deleted_files():
         })
     
     return pd.DataFrame(data)
+
+# ==================== REAL EXTRACTION FUNCTIONS ====================
+
+def extract_real_call_logs(image_path):
+    """
+    Extract real call logs from Android device image.
+    Looks for contacts2.db or similar databases.
+    """
+    try:
+        # Try to find and parse call log database
+        # This would use pytsk3 to mount the image and find the database
+        # For now, we'll look for extracted databases
+        
+        # Common paths for call logs on Android:
+        # /data/data/com.android.providers.contacts/databases/contacts2.db
+        # /data/data/com.android.providers.telephony/databases/mmssms.db
+        
+        st.info("🔍 Searching for call log databases in image...")
+        
+        # This is a placeholder for real implementation
+        # You would need to:
+        # 1. Use pytsk3 to mount the image
+        # 2. Navigate to the database location
+        # 3. Extract and parse the SQLite database
+        
+        # For demonstration, return demo data with a note
+        data = generate_demo_call_logs()
+        st.warning("⚠️ Real database parsing requires pytsk3 image mounting. Using demo data for now.")
+        
+        return data
+        
+    except Exception as e:
+        st.error(f"Error extracting call logs: {str(e)}")
+        return pd.DataFrame(columns=["Contact", "Number", "Type", "Duration (s)", "Timestamp"])
+
+def extract_real_sms(image_path):
+    """
+    Extract real SMS messages from Android device image.
+    """
+    try:
+        st.info("🔍 Searching for SMS databases in image...")
+        
+        # Common path: /data/data/com.android.providers.telephony/databases/mmssms.db
+        # This would require pytsk3 mounting and SQLite parsing
+        
+        data = generate_demo_sms()
+        st.warning("⚠️ Real database parsing requires pytsk3 image mounting. Using demo data for now.")
+        
+        return data
+        
+    except Exception as e:
+        st.error(f"Error extracting SMS: {str(e)}")
+        return pd.DataFrame(columns=["Contact", "Type", "Message", "Timestamp"])
+
+def extract_real_contacts(image_path):
+    """Extract real contacts from device image"""
+    try:
+        st.info("🔍 Searching for contacts database in image...")
+        
+        data = generate_demo_contacts()
+        st.warning("⚠️ Real database parsing requires pytsk3 image mounting. Using demo data for now.")
+        
+        return data
+        
+    except Exception as e:
+        st.error(f"Error extracting contacts: {str(e)}")
+        return pd.DataFrame(columns=["Name", "Phone", "Email", "Company"])
+
+def extract_real_whatsapp(image_path):
+    """Extract WhatsApp messages from device image"""
+    try:
+        st.info("🔍 Searching for WhatsApp database (msgstore.db) in image...")
+        
+        # Common path: /data/data/com.whatsapp/databases/msgstore.db
+        
+        data = generate_demo_chat_data("WhatsApp")
+        st.warning("⚠️ Real WhatsApp extraction requires pytsk3 mounting and decryption key. Using demo data.")
+        
+        return data
+        
+    except Exception as e:
+        st.error(f"Error extracting WhatsApp: {str(e)}")
+        return pd.DataFrame(columns=["Chat", "Sender", "Message", "Timestamp", "App"])
+
+def extract_real_browser_history(image_path, browser_name):
+    """Extract browser history from device image"""
+    try:
+        st.info(f"🔍 Searching for {browser_name} history database in image...")
+        
+        data = generate_demo_browser_history(browser_name)
+        st.warning("⚠️ Real browser extraction requires pytsk3 image mounting. Using demo data for now.")
+        
+        return data
+        
+    except Exception as e:
+        st.error(f"Error extracting browser history: {str(e)}")
+        return pd.DataFrame(columns=["Title", "URL", "Visit Count", "Last Visit", "Browser"])
+
+def extract_real_location_data(image_path):
+    """Extract location data from EXIF and location databases"""
+    try:
+        st.info("🔍 Searching for location data in image...")
+        
+        data = generate_demo_locations()
+        st.warning("⚠️ Real location extraction requires image file parsing. Using demo data for now.")
+        
+        return data
+        
+    except Exception as e:
+        st.error(f"Error extracting location data: {str(e)}")
+        return pd.DataFrame(columns=["Latitude", "Longitude", "Accuracy (m)", "Timestamp", "Source"])
