@@ -115,21 +115,30 @@ def render_calls_sms_extraction(case_id, image_info, extraction_mode):
             csv = st.session_state['sms_data'].to_csv(index=False)
             st.download_button("Download CSV", csv, f"sms_{case_id}.csv", "text/csv")
 
-def render_messaging_extraction(case_id):
+def render_messaging_extraction(case_id, image_info, extraction_mode):
     """Extract WhatsApp and other messaging app data"""
     st.subheader("Messaging Apps")
+    
+    is_real_mode = extraction_mode == "Real Extraction"
     
     app_choice = st.selectbox("Select Messaging App", ["WhatsApp", "Telegram", "Signal", "Facebook Messenger"])
     
     if st.button(f"Extract {app_choice} Data", type="primary"):
-        chat_data = generate_demo_chat_data(app_choice)
-        st.session_state['chat_data'] = chat_data
-        
-        from database.db_manager import add_evidence
-        add_evidence(case_id, f"{app_choice} Chats", f"{len(chat_data)} messages",
-                    metadata={"app": app_choice, "count": len(chat_data)})
-        
-        st.success(f"Extracted {len(chat_data)} {app_choice} messages")
+        with st.spinner(f"Extracting {app_choice} messages..."):
+            if is_real_mode and app_choice == "WhatsApp":
+                chat_data = extract_real_whatsapp(image_info.get('file_path'))
+            else:
+                chat_data = generate_demo_chat_data(app_choice)
+                if is_real_mode:
+                    st.info(f"ℹ️ Real extraction for {app_choice} not yet implemented. Using demo data.")
+            
+            st.session_state['chat_data'] = chat_data
+            
+            from database.db_manager import add_evidence
+            add_evidence(case_id, f"{app_choice} Chats", f"{len(chat_data)} messages",
+                        metadata={"app": app_choice, "count": len(chat_data), "mode": extraction_mode})
+            
+            st.success(f"✅ Extracted {len(chat_data)} {app_choice} messages")
     
     if 'chat_data' in st.session_state:
         st.dataframe(st.session_state['chat_data'], use_container_width=True)
