@@ -204,24 +204,35 @@ def render_location_extraction(case_id, image_info, extraction_mode):
             csv = st.session_state['locations'].to_csv(index=False)
             st.download_button("Download CSV", csv, f"locations_{case_id}.csv", "text/csv")
 
-def render_browser_extraction(case_id):
+def render_browser_extraction(case_id, image_info, extraction_mode):
     """Extract browser history"""
     st.subheader("Browser History")
+    
+    is_real_mode = extraction_mode == "Real Extraction"
     
     browser = st.selectbox("Select Browser", ["Chrome", "Firefox", "Safari", "Edge"])
     
     if st.button(f"Extract {browser} History", type="primary"):
-        history = generate_demo_browser_history(browser)
-        st.session_state['browser_history'] = history
-        
-        from database.db_manager import add_evidence
-        add_evidence(case_id, f"{browser} History", f"{len(history)} records",
-                    metadata={"browser": browser, "count": len(history)})
-        
-        st.success(f"Extracted {len(history)} browsing records")
+        with st.spinner(f"Extracting {browser} history..."):
+            if is_real_mode:
+                history = extract_real_browser_history(image_info.get('file_path'), browser)
+            else:
+                history = generate_demo_browser_history(browser)
+            
+            st.session_state['browser_history'] = history
+            
+            from database.db_manager import add_evidence
+            add_evidence(case_id, f"{browser} History", f"{len(history)} records",
+                        metadata={"browser": browser, "count": len(history), "mode": extraction_mode})
+            
+            st.success(f"✅ Extracted {len(history)} browsing records ({extraction_mode})")
     
     if 'browser_history' in st.session_state:
         st.dataframe(st.session_state['browser_history'], use_container_width=True)
+        
+        if st.button("Export Browser History (CSV)"):
+            csv = st.session_state['browser_history'].to_csv(index=False)
+            st.download_button("Download CSV", csv, f"browser_history_{case_id}.csv", "text/csv")
 
 def render_deleted_data_extraction(case_id):
     """Extract deleted/hidden data"""
