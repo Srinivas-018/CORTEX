@@ -18,6 +18,26 @@ streamlit run app.py
 2. Connect Streamlit Cloud to repository
 3. Deploy with requirements.txt
 
+### Supervisor-based Deployment
+For production deployments using Supervisor, use the provided configuration:
+
+```bash
+# Copy the supervisor configuration to the target host
+sudo cp deployments/runtime/etc/supervisor/conf.d/supervisord.conf /etc/supervisor/conf.d/
+
+# Reload supervisor configuration (using helper script)
+bash scripts/reload-supervisor.sh
+
+# Or manually reload supervisor:
+sudo supervisorctl stop fastapi || true
+sudo supervisorctl stop react || true
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start streamlit || true
+```
+
+The Streamlit service will run on port 8501. FastAPI and React services are disabled in the configuration.
+
 ---
 
 ## Basic Workflow
