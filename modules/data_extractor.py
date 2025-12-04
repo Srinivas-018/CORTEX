@@ -101,7 +101,7 @@ def render_calls_sms_extraction(case_id, image_info, extraction_mode):
     
     if 'call_logs' in st.session_state:
         st.write("**Call Logs:**")
-        st.dataframe(st.session_state['call_logs'], use_container_width=True)
+        st.dataframe(st.session_state['call_logs'], width='stretch')
         
         if st.button("Export Call Logs (CSV)"):
             csv = st.session_state['call_logs'].to_csv(index=False)
@@ -109,7 +109,7 @@ def render_calls_sms_extraction(case_id, image_info, extraction_mode):
     
     if 'sms_data' in st.session_state:
         st.write("**SMS Messages:**")
-        st.dataframe(st.session_state['sms_data'], use_container_width=True)
+        st.dataframe(st.session_state['sms_data'], width='stretch')
         
         if st.button("Export SMS (CSV)"):
             csv = st.session_state['sms_data'].to_csv(index=False)
@@ -141,7 +141,7 @@ def render_messaging_extraction(case_id, image_info, extraction_mode):
             st.success(f"✅ Extracted {len(chat_data)} {app_choice} messages")
     
     if 'chat_data' in st.session_state:
-        st.dataframe(st.session_state['chat_data'], use_container_width=True)
+        st.dataframe(st.session_state['chat_data'], width='stretch')
         
         if st.button("Export Chat Data (CSV)"):
             csv = st.session_state['chat_data'].to_csv(index=False)
@@ -169,7 +169,7 @@ def render_contacts_extraction(case_id, image_info, extraction_mode):
             st.success(f"✅ Extracted {len(contacts)} contacts ({extraction_mode})")
     
     if 'contacts' in st.session_state:
-        st.dataframe(st.session_state['contacts'], use_container_width=True)
+        st.dataframe(st.session_state['contacts'], width='stretch')
         
         if st.button("Export Contacts (CSV)"):
             csv = st.session_state['contacts'].to_csv(index=False)
@@ -197,7 +197,7 @@ def render_location_extraction(case_id, image_info, extraction_mode):
             st.success(f"✅ Extracted {len(locations)} location data points ({extraction_mode})")
     
     if 'locations' in st.session_state:
-        st.dataframe(st.session_state['locations'], use_container_width=True)
+        st.dataframe(st.session_state['locations'], width='stretch')
         st.info("📍 View location map in the 'Visualization' tab")
         
         if st.button("Export Locations (CSV)"):
@@ -228,7 +228,7 @@ def render_browser_extraction(case_id, image_info, extraction_mode):
             st.success(f"✅ Extracted {len(history)} browsing records ({extraction_mode})")
     
     if 'browser_history' in st.session_state:
-        st.dataframe(st.session_state['browser_history'], use_container_width=True)
+        st.dataframe(st.session_state['browser_history'], width='stretch')
         
         if st.button("Export Browser History (CSV)"):
             csv = st.session_state['browser_history'].to_csv(index=False)
@@ -258,7 +258,7 @@ def render_deleted_data_extraction(case_id, image_info, extraction_mode):
         st.success(f"✅ Found {len(deleted_files)} potentially recoverable files")
     
     if 'deleted_files' in st.session_state:
-        st.dataframe(st.session_state['deleted_files'], use_container_width=True)
+        st.dataframe(st.session_state['deleted_files'], width='stretch')
         
         if st.button("Export Deleted Files List (CSV)"):
             csv = st.session_state['deleted_files'].to_csv(index=False)
