@@ -7,6 +7,9 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 import random
+import sqlite3
+import os
+from pathlib import Path
 
 def render_data_extractor(case_id, image_info=None):
     """Render the data extraction interface"""
