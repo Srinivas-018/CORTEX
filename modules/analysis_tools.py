@@ -36,9 +36,18 @@ def render_timeline_reconstruction():
     if 'timeline' in st.session_state:
         timeline = st.session_state['timeline']
         
+        # Convert timestamps to datetime objects to avoid TypeError with floats
+        timeline['Timestamp'] = pd.to_datetime(timeline['Timestamp'], errors='coerce')
+        
+        min_ts = timeline['Timestamp'].min()
+        max_ts = timeline['Timestamp'].max()
+        
+        min_date = min_ts.strftime('%Y-%m-%d') if pd.notnull(min_ts) else "N/A"
+        max_date = max_ts.strftime('%Y-%m-%d') if pd.notnull(max_ts) else "N/A"
+        
         col1, col2, col3 = st.columns(3)
         col1.metric("Total Events", len(timeline))
-        col2.metric("Date Range", f"{timeline['Timestamp'].min()[:10]} to {timeline['Timestamp'].max()[:10]}")
+        col2.metric("Date Range", f"{min_date} to {max_date}")
         col3.metric("Event Types", timeline['Type'].nunique())
         
         st.divider()

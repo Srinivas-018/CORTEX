@@ -48,9 +48,10 @@ def render_charts():
         hourly_calls = call_logs.groupby('Hour').size()
         
         fig2 = px.bar(
-            x=hourly_calls.index,
-            y=hourly_calls.values,
-            labels={'x': 'Hour of Day', 'y': 'Number of Calls'},
+            hourly_calls.reset_index(name='Count'),
+            x='Hour',
+            y='Count',
+            labels={'Hour': 'Hour of Day', 'Count': 'Number of Calls'},
             title="Call Activity by Hour of Day"
         )
         st.plotly_chart(fig2, width='stretch')
@@ -62,11 +63,14 @@ def render_charts():
         
         contact_counts = sms_data['Contact'].value_counts().head(10)
         
+        contact_df = contact_counts.reset_index()
+        contact_df.columns = ['Contact', 'Message Count']
+        
         fig3 = px.bar(
-            x=contact_counts.values,
-            y=contact_counts.index,
+            contact_df,
+            x='Message Count',
+            y='Contact',
             orientation='h',
-            labels={'x': 'Message Count', 'y': 'Contact'},
             title="Top 10 Contacts by SMS Volume"
         )
         st.plotly_chart(fig3, width='stretch')
@@ -77,10 +81,13 @@ def render_charts():
         history = st.session_state['browser_history']
         top_sites = history['Title'].value_counts().head(10)
         
+        top_sites_df = top_sites.reset_index()
+        top_sites_df.columns = ['Website', 'Visit Count']
+        
         fig4 = px.bar(
-            x=top_sites.index,
-            y=top_sites.values,
-            labels={'x': 'Website', 'y': 'Visit Count'},
+            top_sites_df,
+            x='Website',
+            y='Visit Count',
             title="Top 10 Most Visited Websites"
         )
         fig4.update_xaxes(tickangle=45)
@@ -148,10 +155,13 @@ def render_timeline_view():
         
         event_distribution = timeline['Type'].value_counts()
         
+        event_df = event_distribution.reset_index()
+        event_df.columns = ['Event Type', 'Count']
+        
         fig2 = px.bar(
-            x=event_distribution.index,
-            y=event_distribution.values,
-            labels={'x': 'Event Type', 'y': 'Count'},
+            event_df,
+            x='Event Type',
+            y='Count',
             title="Distribution of Events by Type"
         )
         st.plotly_chart(fig2, width='stretch')

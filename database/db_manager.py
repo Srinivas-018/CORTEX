@@ -5,6 +5,7 @@ Handles case management, evidence tracking, and chain of custody
 
 import sqlite3
 import json
+import bcrypt
 from datetime import datetime
 from pathlib import Path
 
@@ -54,9 +55,94 @@ def init_database():
             FOREIGN KEY (case_id) REFERENCES cases(case_id)
         )
     """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash BLOB NOT NULL,
+            full_name TEXT,
+            role TEXT DEFAULT 'Investigator',
+            created_at TEXT
+        )
+    """)
+
     
     conn.commit()
     conn.close()
+
+    # Create default admin user if not exists
+    create_user("admin", "admin123", "System Administrator", "Admin")
+
+def create_user(username, password, full_name="", role="Investigator"):
+    """Create a new user"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    try:
+        # Check if username already exists
+        cursor.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+        if cursor.fetchone():
+            conn.close()
+            return False, "Username already exists"
+
+        # Hash password
+        salt = bcrypt.gensalt()
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
+
+        cursor.execute("""
+            INSERT INTO users (username, password_hash, full_name, role, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (username, password_hash, full_name, role, datetime.now().isoformat()))
+        
+        conn.commit()
+        conn.close()
+        return True, "User created successfully"
+    except Exception as e:
+        conn.close()
+        return False, f"Database error: {str(e)}"
+
+def verify_user(username, password):
+    """Verify user credentials"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT user_id, password_hash, full_name, role FROM users WHERE username = ?", (username,))
+    user = cursor.fetchone()
+    conn.close()
+    
+    if user:
+        stored_hash = user[1]
+        if bcrypt.checkpw(password.encode('utf-8'), stored_hash):
+            return {
+                'user_id': user[0],
+                'username': username,
+                'full_name': user[2],
+                'role': user[3]
+            }
+    
+    return None
+
+def get_all_users():
+    """Retrieve all users"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT user_id, username, full_name, role, created_at FROM users ORDER BY created_at DESC")
+    users = cursor.fetchall()
+    conn.close()
+    
+    formatted_users = []
+    for user in users:
+        formatted_users.append({
+            'user_id': user[0],
+            'username': user[1],
+            'full_name': user[2],
+            'role': user[3],
+            'created_at': user[4]
+        })
+    
+    return formatted_users
 
 def create_case(case_id, case_name, investigator, device_info="", notes=""):
     """Create a new forensic case"""
@@ -64,6 +150,12 @@ def create_case(case_id, case_name, investigator, device_info="", notes=""):
     cursor = conn.cursor()
     
     try:
+        # Check if case name already exists
+        cursor.execute("SELECT case_id FROM cases WHERE case_name = ?", (case_name,))
+        if cursor.fetchone():
+            conn.close()
+            return False, "Case Name already exists"
+
         cursor.execute("""
             INSERT INTO cases (case_id, case_name, investigator, device_info, created_date, notes)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -74,10 +166,13 @@ def create_case(case_id, case_name, investigator, device_info="", notes=""):
         
         add_chain_of_custody(case_id, "Case Created", investigator, f"Created case: {case_name}")
         
-        return True
+        return True, "Case created successfully"
     except sqlite3.IntegrityError:
         conn.close()
-        return False
+        return False, "Case ID already exists"
+    except Exception as e:
+        conn.close()
+        return False, f"Database error: {str(e)}"
 
 def get_all_cases():
     """Retrieve all cases"""
