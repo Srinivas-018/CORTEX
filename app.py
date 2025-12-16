@@ -41,6 +41,24 @@ def init_session_state():
 
 def render_home():
     """Render the home/dashboard page"""
+    # Fetch and filter cases based on permissions
+    all_cases = get_all_cases()
+    cases = []
+    
+    user_info = st.session_state.get('user_info')
+    if user_info:
+        if user_info.get('role') == 'Admin':
+            cases = all_cases
+        else:
+            # Filter cases for the logged-in investigator
+            username = user_info.get('username', '')
+            full_name = user_info.get('full_name', '')
+            
+            cases = [
+                c for c in all_cases 
+                if c[2] and (c[2] == username or c[2] == full_name)
+            ]
+    
     st.title("CORTEX - Mobile Device Forensics Analyzer")
     st.markdown("### Professional Forensic Analysis Platform")
     
@@ -49,7 +67,7 @@ def render_home():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("Active Cases", len(get_all_cases()))
+        st.metric("Active Cases", len(cases))
     with col2:
         st.metric("Platform Status", "Ready")
     with col3:
@@ -60,8 +78,6 @@ def render_home():
     st.divider()
     
     st.subheader("Case Management")
-    
-    cases = get_all_cases()
     
     col1, col2 = st.columns([2, 1])
     
