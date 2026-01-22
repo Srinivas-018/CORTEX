@@ -231,6 +231,35 @@ def render_image_input(case_id):
     """Render the image input and verification interface"""
     st.header("📱 Device Image Input & Verification")
     
+    # Bypass for Demo Case
+    if case_id == "DEMO-CASE":
+        st.success("✅ Demo Image Loaded Successfully")
+        st.info("This is a simulated Android device image for demonstration purposes.")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+             st.subheader("Image Information")
+             st.write("**Filename:** demo_device_image.dd")
+             st.write("**Source:** Synthetic Demo Data")
+             st.write("**Size:** 32.00 GB")
+             st.write("**Detected OS:** Android 12 (Demo)")
+        
+        with col2:
+             st.subheader("Hash Verification")
+             st.code("a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0", language="text")
+             st.caption("SHA-256 Hash (Simulated)")
+             
+        return {
+            'filename': 'demo_device_image.dd',
+            'file_path': 'demo_device_image.dd',
+            'sha256': 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0',
+            'size': 32768, # MB
+            'metadata': {
+                'Detected OS': 'Android',
+                'File System Type': 'ext4'
+            }
+        }
+    
     # Check if image is already uploaded for this case
     case = get_case(case_id)
     if case and case[4]:
@@ -270,34 +299,7 @@ def render_image_input(case_id):
             st.error(f"❌ Image file recorded for this case was not found on disk: {image_path}")
             st.warning("Please locate the file and provide the path again below.")
     
-    # Bypass for Demo Case
-    if case_id == "DEMO-CASE":
-        st.success("✅ Demo Image Loaded Successfully")
-        st.info("This is a simulated Android device image for demonstration purposes.")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-             st.subheader("Image Information")
-             st.write("**Filename:** demo_device_image.dd")
-             st.write("**Source:** Synthetic Demo Data")
-             st.write("**Size:** 32.00 GB")
-             st.write("**Detected OS:** Android 12 (Demo)")
-        
-        with col2:
-             st.subheader("Hash Verification")
-             st.code("a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0", language="text")
-             st.caption("SHA-256 Hash (Simulated)")
-             
-        return {
-            'filename': 'demo_device_image.dd',
-            'file_path': 'demo_device_image.dd',
-            'sha256': 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0',
-            'size': 32768, # MB
-            'metadata': {
-                'Detected OS': 'Android',
-                'File System Type': 'ext4'
-            }
-        }
+
     
     st.info("Enter the absolute file path of the mobile device forensic image (.img, .bin, .dd, .raw)")
     
@@ -520,4 +522,42 @@ def analyze_image_structure_chunked(uploaded_file):
     except Exception as e:
         metadata['Error'] = str(e)
     
+    # Encryption Detection
+    try:
+        uploaded_file.seek(0)
+        # Read first 1MB for broader search if needed, but 4KB is usually enough for headers
+        # Re-read header to be safe
+        header = uploaded_file.read(4096) 
+        uploaded_file.seek(0)
+        
+        encryption_found = []
+        
+        # LUKS (Magic bytes "LUKS\xba\xbe" at offset 0)
+        if header.startswith(b'LUKS\xba\xbe'):
+            encryption_found.append("LUKS")
+            
+        # BitLocker (Look for FVE-FS signature)
+        # Usually in the OEM ID field of the boot sector (bytes 3-10) or shortly after
+        if b'-FVE-FS-' in header:
+            encryption_found.append("BitLocker")
+            
+        # FileVault (CoreStorage logic is complex, checking for common indicators)
+        # This is a basic heuristic
+        if b'CS' == header[0:2] and b'CORE' not in header: # Very weak check, refining:
+             # CoreStorage Volume Header often starts with 'CS' at block 0? No, usually slightly later.
+             # APFS Container might be encryption wrapper.
+             pass
+
+        # High Entropy Check (heuristic for VeraCrypt/random)
+        # VeraCrypt hides headers, so it looks like random data.
+        # Use python-magic if available but here we stick to simple heuristics or signatures.
+        
+        if encryption_found:
+            metadata['Encryption Detected'] = ", ".join(encryption_found)
+        else:
+             metadata['Encryption Detected'] = "None / Unknown (or hidden)"
+             
+    except Exception:
+        pass
+        
     return metadata

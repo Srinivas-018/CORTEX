@@ -60,8 +60,12 @@ def render_report_generator(case_id):
         
         generate_btn = st.form_submit_button("Generate Report", type="primary")
         
-        if generate_btn:
-            with st.spinner("Generating forensic report..."):
+    # Handle report generation
+    if generate_btn:
+        with st.spinner("Generating forensic report..."):
+            try:
+                # Store form values in session state or use them directly
+                # Sanitize inputs for FPDF 1.7.2 compatibility
                 pdf = generate_forensic_report(
                     case,
                     report_title,
@@ -77,17 +81,14 @@ def render_report_generator(case_id):
                 
                 pdf_output = pdf.output(dest='S')
                 if isinstance(pdf_output, str):
-                    pdf_output = pdf_output.encode('latin-1')
+                    pdf_output = pdf_output.encode('latin-1', errors='replace')
                 
-                st.success("Report generated successfully!")
+                # Store in session state
+                st.session_state['generated_report_pdf'] = pdf_output
+                st.session_state['generated_report_name'] = f"forensic_report_{case_id}_{datetime.now().strftime('%Y%m%d')}.pdf"
+                st.session_state['generated_report_case'] = case_id
                 
-                st.download_button(
-                    label="Download PDF Report",
-                    data=pdf_output,
-                    file_name=f"forensic_report_{case_id}_{datetime.now().strftime('%Y%m%d')}.pdf",
-                    mime="application/pdf"
-                )
-                
+                # Log usage
                 from database.db_manager import add_chain_of_custody
                 add_chain_of_custody(
                     case_id,
@@ -95,12 +96,62 @@ def render_report_generator(case_id):
                     investigator,
                     f"Generated {report_title}"
                 )
+                
+                st.success("Report generated successfully!")
+            
+            except Exception as e:
+                st.error(f"Failed to generate report: {str(e)}")
+                import traceback
+                st.code(traceback.format_exc())
+
+    # Display download button if report is available for this case
+    if (st.session_state.get('generated_report_pdf') and 
+        st.session_state.get('generated_report_case') == case_id):
+        
+        st.download_button(
+            label="Download PDF Report",
+            data=st.session_state['generated_report_pdf'],
+            file_name=st.session_state['generated_report_name'],
+            mime="application/pdf"
+        )
+
+def clean_text(text):
+    """Sanitize text for FPDF 1.7.2 (Latin-1 only)"""
+    if not text:
+        return ""
+    # Replace common incompatible characters
+    replacements = {
+        '"': '"', '"': '"', ''': "'", ''': "'",
+        '–': '-', '—': '-', '…': '...',
+        '🔍': '[Search]', '⚠️': '[Warning]',
+        '•': '-', '●': '-'
+    }
+    for k, v in replacements.items():
+        text = text.replace(k, v)
+    
+    # Encode to latin-1 with replacement for any other characters
+    return text.encode('latin-1', 'replace').decode('latin-1')
 
 def generate_forensic_report(case, title, investigator, agency, report_date, 
                             status, classification, sections, summary, conclusions):
     """Generate a PDF forensic report"""
     pdf = FPDF()
     pdf.add_page()
+    
+    # clean strings
+    title = clean_text(title)
+    investigator = clean_text(investigator)
+    agency = clean_text(agency)
+    status = clean_text(status)
+    classification = clean_text(classification)
+    summary = clean_text(summary)
+    conclusions = clean_text(conclusions)
+    
+    # Case fields
+    case_name = clean_text(case[1])
+    device_info = clean_text(case[3] or 'N/A')
+    image_file = clean_text(case[4] or 'N/A')
+    image_hash = clean_text(case[5] or 'N/A')
     
     pdf.set_font("Arial", "B", 20)
     pdf.cell(0, 15, "FORENSIC ANALYSIS REPORT", ln=True, align="C")
@@ -114,7 +165,7 @@ def generate_forensic_report(case, title, investigator, agency, report_date,
     pdf.set_font("Arial", "", 11)
     
     pdf.cell(0, 8, f"Case ID: {case[0]}", ln=True)
-    pdf.cell(0, 8, f"Case Name: {case[1]}", ln=True)
+    pdf.cell(0, 8, f"Case Name: {case_name}", ln=True)
     pdf.cell(0, 8, f"Lead Investigator: {investigator}", ln=True)
     pdf.cell(0, 8, f"Agency: {agency}", ln=True)
     pdf.cell(0, 8, f"Report Date: {report_date.strftime('%Y-%m-%d')}", ln=True)
@@ -133,11 +184,11 @@ def generate_forensic_report(case, title, investigator, agency, report_date,
         pdf.cell(0, 10, "Device Information", ln=True)
         pdf.set_font("Arial", "", 11)
         
-        pdf.cell(0, 8, f"Device Info: {case[3] or 'N/A'}", ln=True)
-        pdf.cell(0, 8, f"Image File: {case[4] or 'N/A'}", ln=True)
+        pdf.cell(0, 8, f"Device Info: {device_info}", ln=True)
+        pdf.cell(0, 8, f"Image File: {image_file}", ln=True)
         pdf.cell(0, 8, f"Image Hash (SHA-256):", ln=True)
         pdf.set_font("Courier", "", 9)
-        pdf.cell(0, 6, f"{case[5] or 'N/A'}", ln=True)
+        pdf.cell(0, 6, f"{image_hash}", ln=True)
         pdf.set_font("Arial", "", 11)
         pdf.ln(5)
     
@@ -154,7 +205,9 @@ def generate_forensic_report(case, title, investigator, agency, report_date,
             pdf.ln(3)
             
             for item in evidence[:10]:
-                pdf.cell(0, 6, f"- {item[2]}: {item[3]}", ln=True)
+                item_desc = clean_text(item[2])
+                item_val = clean_text(item[3])
+                pdf.cell(0, 6, f"- {item_desc}: {item_val}", ln=True)
             
             if len(evidence) > 10:
                 pdf.cell(0, 6, f"... and {len(evidence) - 10} more items", ln=True)
@@ -181,7 +234,10 @@ def generate_forensic_report(case, title, investigator, agency, report_date,
         if custody_log:
             for log in custody_log[:15]:
                 timestamp = datetime.fromisoformat(log[4]).strftime("%Y-%m-%d %H:%M")
-                pdf.cell(0, 5, f"{timestamp} - {log[2]} by {log[3]}: {log[5][:60]}", ln=True)
+                log_action = clean_text(log[2])
+                log_user = clean_text(log[3])
+                log_notes = clean_text(log[5])
+                pdf.cell(0, 5, f"{timestamp} - {log_action} by {log_user}: {log_notes[:60]}", ln=True)
         
         pdf.ln(5)
     
@@ -194,7 +250,7 @@ def generate_forensic_report(case, title, investigator, agency, report_date,
     
     pdf.ln(10)
     pdf.set_font("Arial", "I", 10)
-    pdf.cell(0, 5, f"Report generated by CORTEX - Mobile Device Forensics Analyzer", ln=True, align="C")
+    pdf.cell(0, 5, "Report generated by CORTEX - Mobile Device Forensics Analyzer", ln=True, align="C")
     pdf.cell(0, 5, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True, align="C")
     
     return pdf

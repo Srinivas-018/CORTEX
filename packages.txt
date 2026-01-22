@@ -1,1 +1,11 @@
 sleuthkit
+libbde-utils
+python3-libbde
+libfvde-utils
+python3-libfvde
+cryptsetup
+dislocker
+libdislocker8
+tcplay
+libewf-utils
+python3-libewf

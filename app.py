@@ -259,7 +259,7 @@ def render_case_view(case_id):
             'file_path': case[4],
             'sha256': case[5]
         }
-    elif case[4]:
+    elif case[4] and case[0] != "DEMO-CASE":
         # File path in DB but not on disk
         st.warning(f"⚠️ Image file not found at: {case[4]}")
     
