@@ -388,7 +388,7 @@ if __name__ == "__main__":
     if not get_case("DEMO-CASE"):
         create_case(
             "DEMO-CASE", 
-            "Cortex Demo Investigation", 
+            "Cortex Demo Investigation (India Region)", 
             "System", 
             "Samsung Galaxy S21 (Demo)", 
             "Auto-generated demo case for system capabilities demonstration."

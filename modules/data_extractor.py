@@ -272,10 +272,10 @@ def render_deleted_data_extraction(case_id, image_info, extraction_mode):
             st.download_button("Download CSV", csv, f"deleted_files_{case_id}.csv", "text/csv")
 
 def generate_demo_call_logs():
-    """Generate demo call log data"""
-    contacts = ["John Doe", "Jane Smith", "Bob Johnson", "Alice Williams", "Unknown"]
-    numbers = ["+1-555-0123", "+1-555-0456", "+1-555-0789", "+1-555-0234", "+1-555-0567"]
-    types = ["Incoming", "Outgoing", "Missed"]
+    """Generate demo call log data with Indian and International context"""
+    contacts = ["Rajesh Kumar", "Priya Sharma", "Amit Patel", "Sneha Gupta", "Mohammed Khan", "John Smith (USA)", "Sarah Jones (UK)"]
+    numbers = ["+91-9876543210", "+91-9988776655", "+91-8877665544", "+91-7766554433", "+91-9123456789", "+1-555-0199", "+44-20-7946-0958"]
+    types = ["Incoming", "Outgoing", "Missed", "Rejected", "Voicemail"]
     
     data = []
     base_time = datetime.now() - timedelta(days=30)
@@ -285,24 +285,24 @@ def generate_demo_call_logs():
             "Contact": random.choice(contacts),
             "Number": random.choice(numbers),
             "Type": random.choice(types),
-            "Duration (s)": random.randint(10, 600) if random.choice(types) != "Missed" else 0,
+            "Duration (s)": random.randint(10, 1200) if random.choice(types) not in ["Missed", "Rejected"] else 0,
             "Timestamp": (base_time + timedelta(hours=random.randint(0, 720))).strftime("%Y-%m-%d %H:%M:%S")
         })
     
     return pd.DataFrame(data)
 
 def generate_demo_sms():
-    """Generate demo SMS data"""
-    contacts = ["John Doe", "Jane Smith", "Bob Johnson", "Alice Williams"]
+    """Generate demo SMS data with Indian context"""
+    contacts = ["Rajesh Kumar", "Priya Sharma", "Bank Alert", "Team Lead", "Unknown"]
     messages = [
-        "Hey, are you free tonight?",
-        "Meeting at 3pm tomorrow",
-        "Can you send me that file?",
-        "Thanks for your help!",
-        "See you soon",
-        "OK",
-        "Let me know when you're ready",
-        "Got it!"
+        "Bhai, are we meeting at Connaught Place today?",
+        "Please send the project report by EOD.",
+        "Your A/C XX1234 credited with INR 5,000 via UPI.",
+        "Happy Diwali! Wishing you and your family prosperity.",
+        "Can you share the location for the wedding?",
+        "OTP for your transaction is 4521.",
+        "Lets catch up for tea/chai soon.",
+        "Flight to London confirmed. Check email for tickets."
     ]
     
     data = []
@@ -320,16 +320,16 @@ def generate_demo_sms():
 
 def generate_demo_chat_data(app_name):
     """Generate demo chat data"""
-    contacts = ["John Doe", "Jane Smith", "Work Group", "Family Chat"]
+    contacts = ["College Buddies", "Family Group", "Project Team", "Rahul"]
     messages = [
-        "Hey there!",
-        "How are you?",
-        "Did you see the news?",
-        "Can we talk later?",
-        "Sure thing",
+        "Did you watch the cricket match yesterday?",
+        "Review meeting scheduled for 10 AM IST.",
+        "Going to Goa next long weekend! Who's in?",
+        "Please share the notes.",
+        "Ok",
         "👍",
-        "See you tomorrow",
-        "Thanks!"
+        "Sent you the file.",
+        "Call me when you are free."
     ]
     
     data = []
@@ -348,18 +348,27 @@ def generate_demo_chat_data(app_name):
 
 def generate_demo_contacts():
     """Generate demo contacts"""
-    first_names = ["John", "Jane", "Bob", "Alice", "Charlie", "Diana", "Eva", "Frank"]
-    last_names = ["Doe", "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller"]
+    first_names = ["Arjun", "Neha", "Rohan", "Anjali", "Vikram", "Kavita", "Sanjay", "Deepak"]
+    last_names = ["Sharma", "Verma", "Singh", "Reddy", "Nair", "Iyer", "Patel", "Das"]
     
     data = []
     for i in range(20):
         fname = random.choice(first_names)
         lname = random.choice(last_names)
+        
+        # Mix of Indian and International numbers
+        if random.random() > 0.7:
+             phone = f"+1-555-{random.randint(1000, 9999)}" # USA Link
+        elif random.random() > 0.85:
+             phone = f"+44-20-{random.randint(1000, 9999)}" # UK Link
+        else:
+             phone = f"+91-{random.choice(['98', '99', '88', '77', '91'])}{random.randint(10000000, 99999999)}"
+
         data.append({
             "Name": f"{fname} {lname}",
-            "Phone": f"+1-555-{random.randint(1000, 9999)}",
+            "Phone": phone,
             "Email": f"{fname.lower()}.{lname.lower()}@example.com",
-            "Company": random.choice(["", "TechCorp", "DataInc", "SysLLC"])
+            "Company": random.choice(["", "TCS", "Infosys", "Reliance", "Wipro", "HCL", "Google India", "Startup"])
         })
     
     return pd.DataFrame(data)
@@ -369,16 +378,25 @@ def generate_demo_locations():
     data = []
     base_time = datetime.now() - timedelta(days=7)
     
-    lat_base = 37.7749
-    lon_base = -122.4194
+    # Locations: Delhi, Mumbai, Bangalore, New York, London
+    locations = [
+        (28.6139, 77.2090, "New Delhi, India"),
+        (19.0760, 72.8777, "Mumbai, India"),
+        (12.9716, 77.5946, "Bangalore, India"),
+        (40.7128, -74.0060, "New York, USA"),
+        (51.5074, -0.1278, "London, UK"),
+        (25.2048, 55.2708, "Dubai, UAE")
+    ]
     
     for i in range(30):
+        loc = random.choice(locations)
         data.append({
-            "Latitude": lat_base + random.uniform(-0.1, 0.1),
-            "Longitude": lon_base + random.uniform(-0.1, 0.1),
+            "Latitude": loc[0] + random.uniform(-0.01, 0.01),
+            "Longitude": loc[1] + random.uniform(-0.01, 0.01),
             "Accuracy (m)": random.randint(5, 50),
             "Timestamp": (base_time + timedelta(hours=random.randint(0, 168))).strftime("%Y-%m-%d %H:%M:%S"),
-            "Source": random.choice(["GPS", "WiFi", "Cell Tower"])
+            "Source": random.choice(["GPS", "WiFi", "Cell Tower"]),
+            "Region": loc[2] # Added region for clarity
         })
     
     return pd.DataFrame(data)
@@ -386,12 +404,15 @@ def generate_demo_locations():
 def generate_demo_browser_history(browser):
     """Generate demo browser history"""
     websites = [
-        ("Google", "https://www.google.com/search?q=forensic+analysis"),
-        ("YouTube", "https://www.youtube.com/watch?v=abc123"),
-        ("GitHub", "https://github.com/example/project"),
+        ("The Times of India", "https://timesofindia.indiatimes.com"),
+        ("IRCTC", "https://www.irctc.co.in"),
+        ("Flipkart", "https://www.flipkart.com"),
+        ("BBC News", "https://www.bbc.com/news"),
+        ("NY Times", "https://www.nytimes.com"),
+        ("Government of India", "https://www.india.gov.in"),
+        ("Cricket Info", "https://www.espncricinfo.com"),
         ("Stack Overflow", "https://stackoverflow.com/questions/123456"),
         ("LinkedIn", "https://www.linkedin.com/"),
-        ("Reddit", "https://www.reddit.com/r/technology")
     ]
     
     data = []
@@ -402,7 +423,7 @@ def generate_demo_browser_history(browser):
         data.append({
             "Title": site[0],
             "URL": site[1],
-            "Visit Count": random.randint(1, 10),
+            "Visit Count": random.randint(1, 20),
             "Last Visit": (base_time + timedelta(hours=random.randint(0, 336))).strftime("%Y-%m-%d %H:%M:%S"),
             "Browser": browser
         })
@@ -412,12 +433,14 @@ def generate_demo_browser_history(browser):
 def generate_demo_deleted_files():
     """Generate demo deleted files list"""
     file_types = [
-        ("photo_001.jpg", "Image", "Partially Recoverable"),
-        ("document.pdf", "Document", "Fully Recoverable"),
-        ("video_clip.mp4", "Video", "Partially Recoverable"),
-        ("contact_backup.vcf", "Contact", "Fully Recoverable"),
-        ("notes.txt", "Text", "Fully Recoverable"),
-        ("database.db", "Database", "Corrupted")
+        ("aadhaar_card.pdf", "Document", "Fully Recoverable"),
+        ("goa_vacation_001.jpg", "Image", "Partially Recoverable"),
+        ("pan_card_copy.jpg", "Image", "Fully Recoverable"),
+        ("bank_statement_mar.pdf", "Document", "Fully Recoverable"),
+        ("wedding_video_clip.mp4", "Video", "Partially Recoverable"),
+        ("project_report_final.docx", "Document", "Fully Recoverable"),
+        ("secret_notes.txt", "Text", "Fully Recoverable"),
+        ("crypto_keys_backup.db", "Database", "Corrupted")
     ]
     
     data = []

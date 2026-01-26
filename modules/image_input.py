@@ -240,7 +240,7 @@ def render_image_input(case_id):
         with col1:
              st.subheader("Image Information")
              st.write("**Filename:** demo_device_image.dd")
-             st.write("**Source:** Synthetic Demo Data")
+             st.write("**Source:** Synthetic Demo Data (India Region)")
              st.write("**Size:** 32.00 GB")
              st.write("**Detected OS:** Android 12 (Demo)")
         

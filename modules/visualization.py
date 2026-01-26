@@ -106,9 +106,9 @@ def render_location_map():
             lon='Longitude',
             color='Source',
             size='Accuracy (m)',
-            hover_data=['Timestamp', 'Accuracy (m)'],
+            hover_data=['Timestamp', 'Accuracy (m)', 'Region'],
             title="Device Location History",
-            zoom=10,
+            zoom=1,
             height=600
         )
         
