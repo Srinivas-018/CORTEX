@@ -6,12 +6,25 @@ Timeline reconstruction, keyword search, and artifact analysis
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import json
+import os
+from database.db_manager import get_case
 
 def render_analysis_tools(case_id):
     """Render the analysis tools interface"""
     st.header("Analysis & Investigation Tools")
     
-    tabs = st.tabs(["Timeline Reconstruction", "Keyword Search", "Statistics"])
+    case = get_case(case_id)
+    is_logical = False
+    profile_path = ""
+    if case and case[4] and str(case[4]).endswith('.json'):
+        is_logical = True
+        profile_path = case[4]
+        
+    if is_logical:
+        tabs = st.tabs(["Timeline Reconstruction", "Keyword Search", "Statistics", "System Logs (Logcat)"])
+    else:
+        tabs = st.tabs(["Timeline Reconstruction", "Keyword Search", "Statistics"])
     
     with tabs[0]:
         render_timeline_reconstruction()
@@ -21,6 +34,10 @@ def render_analysis_tools(case_id):
     
     with tabs[2]:
         render_statistics(case_id)
+        
+    if is_logical:
+        with tabs[3]:
+            render_logcat_viewer(profile_path)
 
 def render_timeline_reconstruction():
     """Create a timeline from all extracted artifacts"""
@@ -218,3 +235,34 @@ def perform_keyword_search(keyword, case_sensitive=False):
                 })
     
     return pd.DataFrame(results) if results else pd.DataFrame(columns=['Source', 'Match', 'Context', 'Timestamp'])
+
+def render_logcat_viewer(profile_path):
+    st.subheader("📋 System Logcat Viewer")
+    st.info("Explore and search through system logs captured from the device")
+    
+    if not profile_path or not os.path.exists(profile_path):
+        st.warning("Log profile not found on disk.")
+        return
+        
+    try:
+        with open(profile_path, 'r', encoding='utf-8') as f:
+            profile = json.load(f)
+    except Exception as e:
+        st.error(f"Failed to load profile logs: {str(e)}")
+        return
+        
+    logs = profile.get("logcat", [])
+    if not logs:
+        st.warning("No logcat logs found in this profile.")
+        return
+        
+    df_logs = pd.DataFrame(logs)
+    
+    search_log = st.text_input("Search Logs", placeholder="e.g. fatal, error, system")
+    if search_log:
+        df_logs = df_logs[df_logs['Log Entry'].str.contains(search_log, case=False, na=False)]
+        
+    st.dataframe(df_logs, use_container_width=True, height=450, hide_index=True)
+    
+    txt_content = "\n".join([item.get("Log Entry", "") for item in logs])
+    st.download_button("Download Full Logcat (TXT)", txt_content, "logcat.txt", "text/plain")

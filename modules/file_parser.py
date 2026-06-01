@@ -104,19 +104,74 @@ def render_file_parser(case_id, image_info=None):
     
     st.info(f"Analyzing file system from: **{image_info.get('filename', 'Unknown')}**")
     
+    file_path = image_info.get('file_path', '')
+    is_json_profile = str(file_path).endswith('.json')
+    
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.write(f"**File Size:** {image_info.get('size', 0):.2f} MB")
+        if is_json_profile:
+            st.write("**Data Format:** Logical Forensic Profile (.json)")
+        else:
+            st.write(f"**File Size:** {image_info.get('size', 0):.2f} MB")
     with col2:
-        if str(case_id).lower() in ["democase", "demo-case"]:
+        if str(case_id).lower() in ["democase", "demo-case"] and not is_json_profile:
             demo_mode = st.checkbox("Demo Mode", value=True, help="Toggle between demo data and real file system parsing")
         else:
             demo_mode = False
     
-    if demo_mode:
+    if is_json_profile:
+        render_json_profile_parsing(case_id, image_info)
+    elif demo_mode:
         render_demo_mode()
     else:
         render_real_parsing(case_id, image_info)
+
+def render_json_profile_parsing(case_id, image_info):
+    import json
+    st.subheader("📱 Logical Forensic Profile View")
+    st.success("Loaded Android Logical Forensic Profile (JSON container)")
+    
+    file_path = image_info.get('file_path', '')
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            profile = json.load(f)
+    except Exception as e:
+        st.error(f"Failed to read logical profile: {str(e)}")
+        return
+        
+    props = profile.get("device_properties", {})
+    packages = profile.get("installed_packages", [])
+    processes = profile.get("running_processes", [])
+    
+    # 3 tabs for different profile views
+    profile_tabs = st.tabs(["Device Properties", "Installed Applications", "Running Processes"])
+    
+    with profile_tabs[0]:
+        st.write("### System Configurations")
+        df_props = pd.DataFrame(list(props.items()), columns=["Property", "Value"])
+        st.dataframe(df_props, use_container_width=True, hide_index=True)
+        
+    with profile_tabs[1]:
+        st.write(f"### Installed Application Packages ({len(packages)})")
+        if packages:
+            df_pkgs = pd.DataFrame(packages)
+            search_pkg = st.text_input("Filter Packages", placeholder="e.g. whatsapp")
+            if search_pkg:
+                df_pkgs = df_pkgs[df_pkgs['Package'].str.contains(search_pkg, case=False, na=False) | df_pkgs['Path'].str.contains(search_pkg, case=False, na=False)]
+            st.dataframe(df_pkgs, use_container_width=True, hide_index=True)
+        else:
+            st.info("No package lists found in this profile.")
+            
+    with profile_tabs[2]:
+        st.write(f"### Active System Processes ({len(processes)})")
+        if processes:
+            df_proc = pd.DataFrame(processes)
+            search_proc = st.text_input("Filter Processes", placeholder="e.g. init")
+            if search_proc:
+                df_proc = df_proc[df_proc['Process Name'].str.contains(search_proc, case=False, na=False)]
+            st.dataframe(df_proc, use_container_width=True, hide_index=True)
+        else:
+            st.info("No running process list found in this profile.")
 
 def render_demo_mode():
     st.subheader("📂 Detected Partitions (Demo)")   

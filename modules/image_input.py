@@ -11,6 +11,7 @@ import os
 import subprocess
 import shutil
 from datetime import datetime
+import json
 from database.db_manager import get_case
 
 # Chunk size for processing large files (8MB chunks)
@@ -66,98 +67,560 @@ def acquire_logical_image(device_serial, case_id):
 def render_direct_connection(case_id):
     """Render interface for direct device connection"""
     st.subheader("🔌 Direct Device Connection")
-    st.info("Connect an Android device via USB with USB Debugging (ADB) enabled.")
     
-    if not check_adb_available():
-        st.error("❌ ADB (Android Debug Bridge) not found in system PATH.")
-        st.warning("Please install Android Platform Tools and add 'adb' to your PATH variables.")
-        return
-
-    if st.button("🔄 Scan for Devices"):
-        st.experimental_rerun()
-        
-    devices = get_connected_devices()
-    
-    if not devices:
-        st.warning("No devices detected. Please check your connection and USB Debugging settings.")
-        st.markdown("""
-        **Troubleshooting:**
-        1. Connect phone via USB cable
-        2. Enable **Developer Options** (Tap Build Number 7 times)
-        3. Enable **USB Debugging**
-        4. Accept the RSA fingerprint prompt on the device
-        """)
-        return
-
-    st.success(f"Found {len(devices)} device(s)")
-    
-    selected_device = st.selectbox(
-        "Select Target Device", 
-        options=devices, 
-        format_func=lambda d: f"{d['model']} ({d['serial']})"
+    conn_mode = st.radio(
+        "Select Connection Method",
+        ["Browser-based (WebUSB/WebADB - Vercel & Cloud Friendly)", "Local Server-based (Requires local ADB)"]
     )
     
-    if selected_device:
-        st.write("### Acquisition Options")
+    if conn_mode == "Browser-based (WebUSB/WebADB - Vercel & Cloud Friendly)":
+        st.info("⚡ This mode runs entirely in your web browser. You can connect your phone directly via USB and run logical extractions without installing any local tools.")
         
-        acq_type = st.radio("Acquisition Type", ["Logical (SD Card/Downloads)", "Physical (Requires Root)"])
-        
-        if acq_type == "Physical (Requires Root)":
-            st.warning("Physical acquisition requires root access and `su` binary on device. Using 'dd' over ADB.")
-            st.info("Coming soon in next update.")
-        else:
-            st.write("Extracts contents from `/sdcard/Download` folder as a logical container (ZIP).")
+        # HTML + JS WebUSB Component
+        webusb_html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body {
+              background-color: #0f172a;
+              color: #e2e8f0;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              margin: 0;
+              padding: 10px;
+            }
+            .card {
+              background: rgba(30, 41, 59, 0.7);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-radius: 12px;
+              padding: 20px;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            }
+            .title {
+              font-size: 18px;
+              font-weight: 600;
+              color: #38bdf8;
+              margin-bottom: 15px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .step-list {
+              margin-bottom: 20px;
+            }
+            .step {
+              display: flex;
+              align-items: flex-start;
+              margin-bottom: 12px;
+              font-size: 14px;
+            }
+            .step-num {
+              background: #0284c7;
+              color: white;
+              border-radius: 50%;
+              width: 22px;
+              height: 22px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 12px;
+              font-weight: bold;
+              margin-right: 10px;
+              flex-shrink: 0;
+            }
+            .btn {
+              background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+              color: white;
+              border: none;
+              padding: 10px 18px;
+              border-radius: 6px;
+              font-weight: 500;
+              cursor: pointer;
+              font-size: 14px;
+              transition: all 0.2s;
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+            }
+            .btn:hover {
+              transform: translateY(-1px);
+              box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+            }
+            .btn:disabled {
+              background: #475569;
+              cursor: not-allowed;
+              transform: none;
+              box-shadow: none;
+            }
+            .btn-green {
+              background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            }
+            .btn-green:hover {
+              box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            }
+            .terminal {
+              background-color: #020617;
+              border: 1px solid rgba(255, 255, 255, 0.05);
+              border-radius: 8px;
+              font-family: monospace;
+              padding: 12px;
+              height: 180px;
+              overflow-y: auto;
+              font-size: 12px;
+              color: #34d399;
+              margin-top: 15px;
+            }
+            .status-badge {
+              display: inline-block;
+              padding: 3px 8px;
+              border-radius: 12px;
+              font-size: 11px;
+              font-weight: bold;
+              background: rgba(239, 68, 68, 0.2);
+              color: #ef4444;
+              margin-top: 5px;
+            }
+            .status-badge.connected {
+              background: rgba(16, 185, 129, 0.2);
+              color: #10b981;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <div class="title">🔌 Browser WebUSB-ADB Logical Extractor</div>
+            <div class="step-list">
+              <div class="step">
+                <span class="step-num">1</span>
+                <div>Connect Android device via USB and enable <b>USB Debugging</b>. (Tap Build Number 7 times in Settings > About to enable Developer Options).</div>
+              </div>
+              <div class="step">
+                <span class="step-num">2</span>
+                <div>Click <b>Connect Device</b> and select your phone in the browser prompt.</div>
+              </div>
+              <div class="step">
+                <span class="step-num">3</span>
+                <div>Check your phone's screen and authorize the <b>Allow USB debugging</b> RSA prompt.</div>
+              </div>
+              <div class="step">
+                <span class="step-num">4</span>
+                <div>Click <b>Extract Android Profile</b> to extract metadata, package list, process logs, and logcat files.</div>
+              </div>
+            </div>
             
-            if st.button("🚀 Start Acquisition"):
-                with st.spinner("Acquiring data from device... Do not disconnect!"):
-                    file_path, name_or_error = acquire_logical_image(selected_device['serial'], case_id)
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <button id="btn-connect" class="btn" onclick="connectAdb()">🔗 Connect Device</button>
+              <button id="btn-extract" class="btn btn-green" onclick="startExtraction()" disabled>🚀 Extract Android Profile</button>
+              <button id="btn-download" class="btn" onclick="downloadJSON()" style="display:none; background: #475569;">💾 Download Profile (.json)</button>
+            </div>
+            
+            <div id="status" class="status-badge">Disconnected</div>
+            <div id="device-info" style="margin-top: 10px; font-size: 13px; font-weight: 500;"></div>
+            
+            <div class="terminal" id="log-console">Console log initialized...</div>
+          </div>
+
+          <script src="https://cdn.jsdelivr.net/npm/webadb@latest/webadb.js"></script>
+          <script>
+            let webusb = null;
+            let adb = null;
+            let extractedProfile = null;
+            
+            function log(msg) {
+              const console = document.getElementById("log-console");
+              const time = new Date().toLocaleTimeString();
+              console.innerHTML += `<br>[${time}] ${msg}`;
+              console.scrollTop = console.scrollHeight;
+            }
+            
+            function setStatus(text, isConnected) {
+              const badge = document.getElementById("status");
+              badge.innerText = text;
+              if (isConnected) {
+                badge.className = "status-badge connected";
+              } else {
+                badge.className = "status-badge";
+              }
+            }
+            
+            async function connectAdb() {
+              try {
+                log("Searching for USB device...");
+                webusb = await Adb.open("WebUSB");
+                
+                log("Negotiating ADB protocol connection...");
+                adb = await webusb.connectAdb("host::");
+                
+                log("Checking authentication... please check device screen for RSA permission prompt!");
+                setStatus("Waiting for Auth", false);
+                
+                // Wait briefly for handshake
+                let shell = await adb.shell("getprop ro.product.model");
+                let response = await shell.receive();
+                
+                let model = "Android Device";
+                if (response && response.data) {
+                  model = new TextDecoder().decode(response.data).trim();
+                }
+                
+                log(`Successfully authenticated! Device model: ${model}`);
+                document.getElementById("device-info").innerText = `Connected Device: ${model}`;
+                setStatus("Connected", true);
+                document.getElementById("btn-extract").disabled = false;
+                
+              } catch (err) {
+                log(`Connection failed: ${err.message}`);
+                setStatus("Disconnected", false);
+                document.getElementById("btn-extract").disabled = true;
+              }
+            }
+            
+            async function runShellCmd(cmd) {
+              let shell = await adb.shell(cmd);
+              let out = "";
+              while (true) {
+                let response = await shell.receive();
+                if (!response || !response.data) break;
+                out += new TextDecoder().decode(response.data);
+              }
+              return out.trim();
+            }
+            
+            async function startExtraction() {
+              if (!adb) {
+                log("No device connected!");
+                return;
+              }
+              
+              try {
+                log("Starting logical forensic profile extraction...");
+                document.getElementById("btn-extract").disabled = true;
+                
+                log("1/4: Querying System Properties...");
+                let manufacturer = await runShellCmd("getprop ro.product.manufacturer");
+                let model = await runShellCmd("getprop ro.product.model");
+                let brand = await runShellCmd("getprop ro.product.brand");
+                let release = await runShellCmd("getprop ro.build.version.release");
+                let sdk = await runShellCmd("getprop ro.build.version.sdk");
+                let securityPatch = await runShellCmd("getprop ro.build.version.security_patch");
+                let fingerprint = await runShellCmd("getprop ro.build.fingerprint");
+                let bootloader = await runShellCmd("getprop ro.boot.flash.locked");
+                let serial = await runShellCmd("getprop ro.serialno");
+                let rootCheck = await runShellCmd("su -c id");
+                
+                let isRooted = rootCheck.includes("uid=0");
+                
+                let props = {
+                  "Manufacturer": manufacturer || "Unknown",
+                  "Model": model || "Unknown",
+                  "Brand": brand || "Unknown",
+                  "Android Version": release || "Unknown",
+                  "SDK Level": sdk || "Unknown",
+                  "Security Patch": securityPatch || "Unknown",
+                  "Build Fingerprint": fingerprint || "Unknown",
+                  "Bootloader State": bootloader === "1" ? "Locked (Secure)" : (bootloader === "0" ? "Unlocked (Vulnerable)" : "Unknown"),
+                  "Serial Number": serial || "Unknown",
+                  "Root Status": isRooted ? "Rooted (su accessible)" : "Non-Rooted",
+                  "Extraction Timestamp": new Date().toISOString()
+                };
+                
+                log("2/4: Enumerating Installed Packages...");
+                let pkgsRaw = await runShellCmd("pm list packages -f");
+                let packages = [];
+                pkgsRaw.split("\\n").forEach(line => {
+                  if (line.startsWith("package:")) {
+                    let parts = line.replace("package:", "").split("=");
+                    if (parts.length >= 2) {
+                      let path = parts[0];
+                      let pkg = parts.slice(1).join("=");
+                      let isSystem = path.startsWith("/system/") || path.startsWith("/product/");
+                      packages.push({"Package": pkg, "Path": path, "Type": isSystem ? "System" : "Third-Party"});
+                    }
+                  }
+                });
+                
+                log("3/4: Querying Active Process List...");
+                let psRaw = await runShellCmd("ps -A || ps");
+                let processes = [];
+                let psLines = psRaw.split("\\n");
+                if (psLines.length > 1) {
+                  let header = psLines[0].split(/\\s+/);
+                  let userIdx = header.indexOf("USER");
+                  let pidIdx = header.indexOf("PID");
+                  let nameIdx = header.indexOf("NAME");
+                  if (nameIdx === -1) nameIdx = header.indexOf("CMD");
+                  
+                  for (let i = 1; i < psLines.length; i++) {
+                    let parts = psLines[i].split(/\\s+/);
+                    if (parts.length > Math.max(userIdx, pidIdx, nameIdx)) {
+                      processes.push({
+                        "PID": parts[pidIdx],
+                        "User": parts[userIdx],
+                        "Process Name": parts[nameIdx]
+                      });
+                    }
+                  }
+                }
+                
+                log("4/4: Pulling Logcat System Logs...");
+                let logcatRaw = await runShellCmd("logcat -d -t 300 -v threadtime");
+                let logcat = logcatRaw.split("\\n").map(l => ({"Log Entry": l.trim()})).filter(l => l["Log Entry"]);
+                
+                extractedProfile = {
+                  "device_properties": props,
+                  "installed_packages": packages,
+                  "running_processes": processes,
+                  "logcat": logcat,
+                  "source": "WebUSB-ADB Browser Extraction"
+                };
+                
+                log("Extraction complete! File ready for saving/downloading.");
+                document.getElementById("btn-download").style.display = "inline-flex";
+                document.getElementById("btn-extract").disabled = false;
+                
+              } catch (err) {
+                log(`Extraction failed: ${err.message}`);
+                document.getElementById("btn-extract").disabled = false;
+              }
+            }
+            
+            function downloadJSON() {
+              if (!extractedProfile) return;
+              
+              const jsonStr = JSON.stringify(extractedProfile, null, 2);
+              const blob = new Blob([jsonStr], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `cortex_android_logical_profile_${extractedProfile.device_properties.Model.replace(/\\s+/g, "_")}.json`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              log("Forensic profile JSON file downloaded successfully!");
+            }
+          </script>
+        </body>
+        </html>
+        """
+        st.components.v1.html(webusb_html, height=520, scrolling=True)
+        
+        st.divider()
+        st.subheader("📥 Load Extracted Profile (.json)")
+        st.write("After extracting the profile and downloading the `.json` file above, upload it here to import the device data into the case.")
+        
+        uploaded_profile = st.file_uploader("Upload Logical Profile JSON", type=["json"], key="wasm_profile_uploader")
+        
+        if uploaded_profile is not None:
+            try:
+                # Read JSON
+                profile_data = json.load(uploaded_profile)
+                
+                # Check structure
+                if "device_properties" not in profile_data:
+                    st.error("Invalid JSON profile. Missing 'device_properties'.")
+                    return None
                     
-                    if file_path:
-                        st.success("✅ Acquisition completed successfully!")
-                        st.write(f"**Saved to:** {file_path}")
+                # Save to disk
+                props = profile_data["device_properties"]
+                model = props.get("Model", "Unknown")
+                filename = f"logical_profile_{model.replace(' ', '_')}.json"
+                
+                # Create directory
+                extract_dir = os.path.join(os.getcwd(), "extracted_evidence", case_id)
+                os.makedirs(extract_dir, exist_ok=True)
+                dest_path = os.path.join(extract_dir, filename)
+                
+                # Write to disk
+                uploaded_profile.seek(0)
+                with open(dest_path, "w", encoding="utf-8") as f:
+                    json.dump(profile_data, f, indent=4)
+                    
+                # Calculate Hash
+                uploaded_profile.seek(0)
+                sha256_hash = hashlib.sha256(uploaded_profile.read()).hexdigest()
+                
+                # Update case & evidence
+                from database.db_manager import update_case, add_chain_of_custody, add_evidence
+                update_case(case_id, image_path=dest_path, image_hash=sha256_hash)
+                
+                add_evidence(
+                    case_id,
+                    "Logical Profile",
+                    filename,
+                    file_path=dest_path,
+                    hash_value=sha256_hash,
+                    metadata=props
+                )
+                
+                add_chain_of_custody(
+                    case_id,
+                    "Acquisition",
+                    st.session_state.get('investigator', 'Unknown'),
+                    f"Imported logical forensic profile for {model} via WebUSB"
+                )
+                
+                st.success(f"✅ Successfully loaded logical profile for {model} into case!")
+                st.balloons()
+                
+                # Refresh session state
+                st.session_state['image_path'] = dest_path
+                return {
+                    'filename': filename,
+                    'file_path': dest_path,
+                    'sha256': sha256_hash,
+                    'size': 0,
+                    'metadata': props
+                }
+                
+            except Exception as e:
+                st.error(f"Error loading profile: {str(e)}")
+                
+    else:
+        # Local Server-based (Native ADB)
+        if not check_adb_available():
+            st.error("❌ ADB (Android Debug Bridge) not found in system PATH.")
+            st.warning("Please install Android Platform Tools and add 'adb' to your PATH variables.")
+            return
+            
+        if st.button("🔄 Scan for Devices"):
+            st.rerun()
+            
+        from modules.adb_forensics import get_connected_devices, run_full_logical_extraction
+        devices = get_connected_devices()
+        
+        if not devices:
+            st.warning("No devices detected. Please check your connection and USB Debugging settings.")
+            st.markdown("""
+            **Troubleshooting:**
+            1. Connect phone via USB cable
+            2. Enable **Developer Options** (Tap Build Number 7 times)
+            3. Enable **USB Debugging**
+            4. Accept the RSA fingerprint prompt on the device
+            """)
+            return
+            
+        st.success(f"Found {len(devices)} device(s)")
+        
+        selected_device = st.selectbox(
+            "Select Target Device",
+            options=devices,
+            format_func=lambda d: f"{d['model']} ({d['serial']}) - [{d['status']}]"
+        )
+        
+        if selected_device:
+            if selected_device["status"] == "Unauthorized":
+                st.warning("⚠️ This device is unauthorized. Please look at the phone screen and allow USB debugging.")
+                return
+                
+            st.write("### Acquisition Options")
+            acq_type = st.radio("Acquisition Type", ["Forensic Profile (Metadata, Packages, Processes, Logs)", "Logical Dump (Zip /sdcard/Download)"])
+            
+            if acq_type == "Forensic Profile (Metadata, Packages, Processes, Logs)":
+                st.info("Extracts comprehensive system configurations, installed applications, active processes, and logs.")
+                if st.button("🚀 Start Acquisition"):
+                    with st.spinner("Extracting forensic profile..."):
+                        file_path, profile_data = run_full_logical_extraction(selected_device['serial'], case_id)
                         
-                        # Register as evidence
-                        try:
+                        if file_path:
+                            st.success("✅ Forensic Profile extracted successfully!")
+                            st.write(f"**Saved to:** {file_path}")
+                            
                             # Hashing
                             hash_progress = st.progress(0, text="Calculating Hash...")
                             with open(file_path, "rb") as f:
                                 sha256_hash = calculate_hash_chunked(f, 'sha256')
                             hash_progress.progress(100, text="Done")
                             
-                            metadata = {
-                                "Source": "Direct Connection",
-                                "Device Model": selected_device['model'],
-                                "Serial": selected_device['serial'],
-                                "Acquisition Type": "Logical"
-                            }
+                            props = profile_data.get("device_properties", {})
                             
                             from database.db_manager import update_case, add_chain_of_custody, add_evidence
-                            
                             update_case(case_id, image_path=file_path, image_hash=sha256_hash)
                             
                             add_evidence(
-                                case_id, 
-                                "Logical Dump", 
-                                name_or_error,
+                                case_id,
+                                "Logical Profile",
+                                os.path.basename(file_path),
                                 file_path=file_path,
                                 hash_value=sha256_hash,
-                                metadata=metadata
+                                metadata=props
                             )
                             
                             add_chain_of_custody(
-                                case_id, 
-                                "Acquisition", 
+                                case_id,
+                                "Acquisition",
                                 st.session_state.get('investigator', 'Unknown'),
-                                f"Acquired logical image from {selected_device['model']} ({selected_device['serial']})"
+                                f"Acquired full logical profile from {selected_device['model']} ({selected_device['serial']})"
                             )
                             
                             st.session_state['image_path'] = file_path
                             st.balloons()
+                            return {
+                                'filename': os.path.basename(file_path),
+                                'file_path': file_path,
+                                'sha256': sha256_hash,
+                                'size': 0,
+                                'metadata': props
+                            }
+                        else:
+                            st.error(f"Acquisition failed: {profile_data}")
+            else:
+                # Zip /sdcard/Download
+                st.write("Extracts contents from `/sdcard/Download` folder as a logical container (ZIP).")
+                if st.button("🚀 Start Acquisition"):
+                    with st.spinner("Acquiring data from device... Do not disconnect!"):
+                        file_path, name_or_error = acquire_logical_image(selected_device['serial'], case_id)
+                        
+                        if file_path:
+                            st.success("✅ Acquisition completed successfully!")
+                            st.write(f"**Saved to:** {file_path}")
                             
-                        except Exception as e:
-                            st.error(f"Error registering evidence: {str(e)}")
-                    else:
-                        st.error(f"Acquisition failed: {name_or_error}")
+                            try:
+                                # Hashing
+                                hash_progress = st.progress(0, text="Calculating Hash...")
+                                with open(file_path, "rb") as f:
+                                    sha256_hash = calculate_hash_chunked(f, 'sha256')
+                                hash_progress.progress(100, text="Done")
+                                
+                                metadata = {
+                                    "Source": "Direct Connection",
+                                    "Device Model": selected_device['model'],
+                                    "Serial": selected_device['serial'],
+                                    "Acquisition Type": "Logical"
+                                }
+                                
+                                from database.db_manager import update_case, add_chain_of_custody, add_evidence
+                                update_case(case_id, image_path=file_path, image_hash=sha256_hash)
+                                
+                                add_evidence(
+                                    case_id, 
+                                    "Logical Dump", 
+                                    name_or_error,
+                                    file_path=file_path,
+                                    hash_value=sha256_hash,
+                                    metadata=metadata
+                                )
+                                
+                                add_chain_of_custody(
+                                    case_id, 
+                                    "Acquisition", 
+                                    st.session_state.get('investigator', 'Unknown'),
+                                    f"Acquired logical image from {selected_device['model']} ({selected_device['serial']})"
+                                )
+                                
+                                st.session_state['image_path'] = file_path
+                                st.balloons()
+                                return {
+                                    'filename': name_or_error,
+                                    'file_path': file_path,
+                                    'sha256': sha256_hash,
+                                    'size': 0,
+                                    'metadata': metadata
+                                }
+                            except Exception as e:
+                                st.error(f"Error registering evidence: {str(e)}")
+                        else:
+                            st.error(f"Acquisition failed: {name_or_error}")
 
 def calculate_hash_chunked(uploaded_file, algorithm='sha256'):
     """
@@ -301,6 +764,11 @@ def render_image_input(case_id):
     
 
     
+    input_method = st.radio("Select Input Source", ["Upload / Local File Path", "Direct Device Connection (USB/ADB)"])
+    
+    if input_method == "Direct Device Connection (USB/ADB)":
+        return render_direct_connection(case_id)
+        
     st.info("Enter the absolute file path of the mobile device forensic image (.img, .bin, .dd, .raw)")
     
     selected_file = None

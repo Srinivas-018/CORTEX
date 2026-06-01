@@ -5,11 +5,25 @@ Handles case management, evidence tracking, and chain of custody
 
 import sqlite3
 import json
-import bcrypt
+try:
+    import bcrypt
+    HAS_BCRYPT = True
+except ImportError:
+    HAS_BCRYPT = False
+    import hashlib
+    import secrets
+    import hmac
 from datetime import datetime
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "cortex.db"
+import sys
+IS_WASM = sys.platform == "emscripten"
+
+if IS_WASM:
+    DB_PATH = Path("/cortex_data/cortex.db")
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+else:
+    DB_PATH = Path(__file__).parent / "cortex.db"
 
 def init_database():
     """Initialize the CORTEX database with required tables"""
@@ -87,8 +101,14 @@ def create_user(username, password, full_name="", role="Investigator"):
             return False, "Username already exists"
 
         # Hash password
-        salt = bcrypt.gensalt()
-        password_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
+        if HAS_BCRYPT:
+            salt = bcrypt.gensalt()
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
+        else:
+            salt = secrets.token_bytes(16)
+            iterations = 100000
+            key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, iterations)
+            password_hash = b'PBKDF2\x00' + salt + key
 
         cursor.execute("""
             INSERT INTO users (username, password_hash, full_name, role, created_at)
@@ -113,7 +133,20 @@ def verify_user(username, password):
     
     if user:
         stored_hash = user[1]
-        if bcrypt.checkpw(password.encode('utf-8'), stored_hash):
+        is_verified = False
+        if stored_hash.startswith(b'PBKDF2\x00'):
+            salt = stored_hash[7:23]
+            key = stored_hash[23:]
+            iterations = 100000
+            new_key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, iterations)
+            is_verified = hmac.compare_digest(key, new_key)
+        elif HAS_BCRYPT:
+            try:
+                is_verified = bcrypt.checkpw(password.encode('utf-8'), stored_hash)
+            except Exception:
+                pass
+        
+        if is_verified:
             return {
                 'user_id': user[0],
                 'username': username,

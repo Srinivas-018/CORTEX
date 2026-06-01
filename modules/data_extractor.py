@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import random
 import sqlite3
 import os
+import json
 from pathlib import Path
 
 def render_data_extractor(case_id, image_info=None):
@@ -478,6 +479,28 @@ def find_file_in_image(image_path, target_names):
     Search for a file within a forensic image or check if the input file IS the target.
     Returns: Path to extracted temporary file or None
     """
+    if not image_path:
+        return None
+        
+    # Check if the image path is a JSON logical profile
+    if str(image_path).endswith('.json'):
+        try:
+            with open(image_path, 'r', encoding='utf-8') as f:
+                profile = json.load(f)
+            db_map = profile.get("databases", {})
+            for name in target_names:
+                # Map target name to db key
+                key = None
+                if "contacts" in name: key = "contacts"
+                elif "sms" in name: key = "sms"
+                elif "msgstore" in name: key = "whatsapp"
+                
+                if key and key in db_map and os.path.exists(db_map[key]):
+                    return db_map[key]
+        except Exception:
+            pass
+        return None
+
     # 1. Check if the input file itself is the database
     if os.path.isfile(image_path):
         try:
